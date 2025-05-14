@@ -24,14 +24,14 @@ const ConversationHeader = styled.div`
   color: #1a1a1a;
 `;
 
-const ConversationItem = styled.div<{ isActive?: boolean }>`
+const ConversationItem = styled.div<{ $isActive?: boolean }>`
   padding: 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: ${props => props.isActive ? '#f3f4f6' : 'transparent'};
+  background-color: ${props => props.$isActive ? '#f3f4f6' : 'transparent'};
 
   &:hover {
     background-color: #f3f4f6;
@@ -90,13 +90,13 @@ const ChatMessages = styled.div`
   gap: 16px;
 `;
 
-const Message = styled.div<{ isOwn?: boolean }>`
+const Message = styled.div<{ $isOwn?: boolean }>`
   max-width: 70%;
   padding: 12px 16px;
   border-radius: 12px;
-  background-color: ${props => props.isOwn ? '#2563eb' : '#f3f4f6'};
-  color: ${props => props.isOwn ? 'white' : '#1a1a1a'};
-  align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
+  background-color: ${props => props.$isOwn ? '#2563eb' : '#f3f4f6'};
+  color: ${props => props.$isOwn ? 'white' : '#1a1a1a'};
+  align-self: ${props => props.$isOwn ? 'flex-end' : 'flex-start'};
 `;
 
 const MessageInput = styled.div`
@@ -165,7 +165,7 @@ const Messages: React.FC = () => {
       <ConversationsList>
         <ConversationHeader>Messages</ConversationHeader>
         {conversations.map(conv => (
-          <ConversationItem key={conv.id} isActive={conv.id === 1}>
+          <ConversationItem key={conv.id} $isActive={conv.id === 1}>
             <Avatar>{conv.avatar}</Avatar>
             <ConversationInfo>
               <Name>{conv.name}</Name>
@@ -183,7 +183,7 @@ const Messages: React.FC = () => {
 
         <ChatMessages>
           {messages.map(msg => (
-            <Message key={msg.id} isOwn={msg.isOwn}>
+            <Message key={msg.id} $isOwn={msg.isOwn}>
               {msg.text}
             </Message>
           ))}

@@ -6,15 +6,6 @@ import type { Event as EventType } from '../../shared/types';
 import { Timestamp } from 'firebase/firestore';
 import { ipcRenderer } from 'electron';
 
-declare global {
-  interface Window {
-    electron: {
-      getVersion: () => Promise<string>;
-      searchUnsplash: (query: string) => Promise<string>;
-    }
-  }
-}
-
 const CalendarContainer = styled.div`
   display: flex;
   flex-direction: column;

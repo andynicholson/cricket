@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Edit2, Map, Clock, Award, Activity } from 'react-feather';
+import { useStrava } from '../contexts/StravaContext';
+import { stravaService } from '../services/stravaService';
 
 const ProfileContainer = styled.div`
   display: flex;
@@ -151,62 +153,120 @@ const ActivityMeta = styled.div`
   color: #6b7280;
 `;
 
-const Profile: React.FC = () => {
-  // Mock data for demonstration
-  const stats = [
-    { label: 'Total Distance', value: '1,234 km', icon: Map },
-    { label: 'Total Time', value: '156 hrs', icon: Clock },
-    { label: 'Races Completed', value: '12', icon: Award },
-    { label: 'Personal Bests', value: '8', icon: Activity },
-  ];
+interface AthleteStats {
+  all_run_totals: {
+    distance: number;
+    moving_time: number;
+    count: number;
+  };
+  recent_run_totals: {
+    count: number;
+  };
+}
 
-  const recentActivities = [
-    {
-      id: 1,
-      title: 'Morning Trail Run',
-      distance: '10.5 km',
-      time: '1h 15m',
-      date: 'March 20, 2024',
-      icon: Activity,
-    },
-    {
-      id: 2,
-      title: 'Weekend Long Run',
-      distance: '25 km',
-      time: '2h 45m',
-      date: 'March 18, 2024',
-      icon: Activity,
-    },
-    {
-      id: 3,
-      title: 'Race: Mountain Trail Challenge',
-      distance: '42 km',
-      time: '4h 30m',
-      date: 'March 15, 2024',
-      icon: Award,
-    },
-  ];
+interface Activity {
+  id: number;
+  name: string;
+  distance: number;
+  moving_time: number;
+  start_date: string;
+  type: string;
+}
+
+const Profile: React.FC = () => {
+  const { isAuthenticated, athlete, accessToken, login, logout } = useStrava();
+  const [stats, setStats] = useState<AthleteStats | null>(null);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (isAuthenticated && accessToken && athlete) {
+        try {
+          const [statsData, activitiesData] = await Promise.all([
+            stravaService.getAthleteStats(accessToken, athlete.id),
+            stravaService.getRecentActivities(accessToken, 3)
+          ]);
+          
+          setStats(statsData);
+          setRecentActivities(activitiesData);
+        } catch (error) {
+          console.error('Error fetching Strava data:', error);
+          logout();
+        }
+      }
+    };
+
+    fetchData();
+  }, [isAuthenticated, accessToken, athlete, logout]);
+
+  if (!isAuthenticated) {
+    return (
+      <ProfileContainer>
+        <ProfileHeader>
+          <ProfileInfo>
+            <Name>Connect with Strava</Name>
+            <Bio>
+              Connect your Strava account to view your running statistics and recent activities.
+            </Bio>
+            <EditButton onClick={login}>
+              Connect with Strava
+            </EditButton>
+          </ProfileInfo>
+        </ProfileHeader>
+      </ProfileContainer>
+    );
+  }
+
+  const formatDistance = (meters: number) => {
+    return `${(meters / 1000).toFixed(1)} km`;
+  };
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${minutes}m`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const statsData = stats ? [
+    { label: 'Total Distance', value: formatDistance(stats.all_run_totals.distance), icon: Map },
+    { label: 'Total Time', value: formatTime(stats.all_run_totals.moving_time), icon: Clock },
+    { label: 'Runs Completed', value: stats.all_run_totals.count.toString(), icon: Award },
+    { label: 'Recent Runs', value: stats.recent_run_totals.count.toString(), icon: Activity },
+  ] : [];
 
   return (
     <ProfileContainer>
       <ProfileHeader>
-        <Avatar>JD</Avatar>
+        <Avatar>
+          {athlete?.profile_medium ? (
+            <img src={athlete.profile_medium} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+          ) : (
+            `${athlete?.firstname?.[0]}${athlete?.lastname?.[0]}`
+          )}
+        </Avatar>
         <ProfileInfo>
           <Name>
-            John Doe
-            <EditButton>
-              <Edit2 size={20} />
+            {`${athlete?.firstname} ${athlete?.lastname}`}
+            <EditButton onClick={logout}>
+              Disconnect
             </EditButton>
           </Name>
           <Bio>
-            Trail runner and ultra marathon enthusiast. Love exploring new trails and
-            challenging myself with longer distances. Always up for a group run!
+            Connected with Strava • {athlete?.city}, {athlete?.country}
           </Bio>
         </ProfileInfo>
       </ProfileHeader>
 
       <Stats>
-        {stats.map((stat, index) => (
+        {statsData.map((stat, index) => (
           <StatCard key={index}>
             <stat.icon size={24} />
             <StatValue>{stat.value}</StatValue>
@@ -221,12 +281,12 @@ const Profile: React.FC = () => {
           {recentActivities.map(activity => (
             <ActivityItem key={activity.id}>
               <ActivityIcon>
-                <activity.icon size={20} />
+                <Activity size={20} />
               </ActivityIcon>
               <ActivityInfo>
-                <ActivityTitle>{activity.title}</ActivityTitle>
+                <ActivityTitle>{activity.name}</ActivityTitle>
                 <ActivityMeta>
-                  {activity.distance} • {activity.time} • {activity.date}
+                  {formatDistance(activity.distance)} • {formatTime(activity.moving_time)} • {formatDate(activity.start_date)}
                 </ActivityMeta>
               </ActivityInfo>
             </ActivityItem>

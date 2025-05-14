@@ -23,4 +23,35 @@ export interface UserProfile {
   email: string;
   avatar?: string;
   preferences?: Record<string, any>;
+}
+
+// Strava Types
+export interface StravaAthlete {
+  id: number;
+  firstname: string;
+  lastname: string;
+  profile_medium: string;
+  profile: string;
+  city?: string;
+  country?: string;
+}
+
+export interface StravaActivity {
+  id: number;
+  name: string;
+  distance: number;
+  moving_time: number;
+  start_date: string;
+  type: string;
+}
+
+export interface StravaStats {
+  all_run_totals: {
+    distance: number;
+    moving_time: number;
+    count: number;
+  };
+  recent_run_totals: {
+    count: number;
+  };
 } 

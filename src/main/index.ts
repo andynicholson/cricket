@@ -1,7 +1,24 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol } from 'electron';
 import path from 'path';
+import axios from 'axios';
 
 const UNSPLASH_ACCESS_KEY = 'bjNofz1Fzm6AJBDW22g27x4IfsNkUn3zHfzDHpuVH5Y';
+const STRAVA_API_URL = 'https://www.strava.com/api/v3';
+const STRAVA_TOKEN_URL = 'https://www.strava.com/oauth/token';
+
+// These should be stored securely in production
+const STRAVA_CLIENT_ID = process.env.NODE_ENV === 'development'
+  ? process.env.VITE_STRAVA_CLIENT_ID
+  : 'your_production_client_id';
+
+const STRAVA_CLIENT_SECRET = process.env.NODE_ENV === 'development'
+  ? process.env.VITE_STRAVA_CLIENT_SECRET
+  : 'your_production_client_secret';
+
+// Register custom protocol before app is ready
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'cricket', privileges: { secure: true, standard: true } }
+]);
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -25,12 +42,24 @@ function createWindow() {
           "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:*",
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: https:",
-          "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com https://api.unsplash.com",
+          "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com https://api.unsplash.com https://www.strava.com https://api.strava.com",
           "font-src 'self'",
           "worker-src 'self' blob:"
         ].join('; ')
       }
     });
+  });
+
+  // Handle custom protocol
+  protocol.handle('cricket', (request) => {
+    const url = new URL(request.url);
+    if (url.pathname === '/auth/strava/callback') {
+      const code = url.searchParams.get('code');
+      if (code) {
+        mainWindow.webContents.send('strava-auth-callback', code);
+      }
+    }
+    return new Response(null, { status: 200 });
   });
 
   // Load the index.html file
@@ -40,14 +69,14 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
-  // Open DevTools in development
-  if (process.env.NODE_ENV === 'development') {
+  // Open DevTools only if explicitly enabled
+  if (process.env.OPEN_DEVTOOLS === 'true') {
     mainWindow.webContents.openDevTools();
   }
 }
 
-// Set development mode
-process.env.NODE_ENV = 'development';
+// Remove forced development mode
+// process.env.NODE_ENV = 'development';
 
 app.whenReady().then(() => {
   createWindow();
@@ -103,4 +132,32 @@ ipcMain.handle('search-unsplash', async (_, query: string) => {
     console.error('Error fetching image from Unsplash:', error);
     return 'https://images.unsplash.com/photo-1551632811-561732d1e306?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80';
   }
+});
+
+// IPC Handlers
+ipcMain.handle('get-strava-client-id', () => STRAVA_CLIENT_ID);
+ipcMain.handle('get-strava-client-secret', () => STRAVA_CLIENT_SECRET);
+
+ipcMain.handle('exchange-strava-code', async (_, code: string) => {
+  const params = new URLSearchParams({
+    client_id: STRAVA_CLIENT_ID!,
+    client_secret: STRAVA_CLIENT_SECRET!,
+    code,
+    grant_type: 'authorization_code',
+  });
+
+  const response = await axios.post(STRAVA_TOKEN_URL, params);
+  return response.data;
+});
+
+ipcMain.handle('refresh-strava-token', async (_, refreshToken: string) => {
+  const params = new URLSearchParams({
+    client_id: STRAVA_CLIENT_ID!,
+    client_secret: STRAVA_CLIENT_SECRET!,
+    refresh_token: refreshToken,
+    grant_type: 'refresh_token',
+  });
+
+  const response = await axios.post(STRAVA_TOKEN_URL, params);
+  return response.data;
 }); 
