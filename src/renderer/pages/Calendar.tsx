@@ -663,20 +663,23 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     setIsSubmitting(true);
 
     try {
+      // Log raw values before any processing
+      console.log('Raw form values:', {
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        title,
+        description,
+        location
+      });
+
       const dateError = validateDates(startDate, endDate);
       if (dateError) {
         setError(dateError);
         setIsSubmitting(false);
         return;
       }
-
-      // Log the raw input values
-      console.log('Raw input values:', {
-        startDate,
-        startTime,
-        endDate,
-        endTime
-      });
 
       // Parse dates and times separately to ensure valid values
       const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
@@ -685,15 +688,33 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
       const [endHour, endMinute] = (endTime || '17:00').split(':').map(Number);
 
-      // Log parsed components
+      // Log parsed components with their types
       console.log('Parsed date components:', {
-        start: { year: startYear, month: startMonth, day: startDay, hour: startHour, minute: startMinute },
-        end: { year: endYear, month: endMonth, day: endDay, hour: endHour, minute: endMinute }
+        start: {
+          year: { value: startYear, type: typeof startYear },
+          month: { value: startMonth, type: typeof startMonth },
+          day: { value: startDay, type: typeof startDay },
+          hour: { value: startHour, type: typeof startHour },
+          minute: { value: startMinute, type: typeof startMinute }
+        },
+        end: {
+          year: { value: endYear, type: typeof endYear },
+          month: { value: endMonth, type: typeof endMonth },
+          day: { value: endDay, type: typeof endDay },
+          hour: { value: endHour, type: typeof endHour },
+          minute: { value: endMinute, type: typeof endMinute }
+        }
       });
 
       // Validate parsed components
-      if (!startYear || !startMonth || !startDay || startHour === undefined || startMinute === undefined ||
-          !endYear || !endMonth || !endDay || endHour === undefined || endMinute === undefined) {
+      if (isNaN(startYear) || isNaN(startMonth) || isNaN(startDay) || 
+          isNaN(startHour) || isNaN(startMinute) ||
+          isNaN(endYear) || isNaN(endMonth) || isNaN(endDay) || 
+          isNaN(endHour) || isNaN(endMinute)) {
+        console.error('Invalid date components:', {
+          start: { year: startYear, month: startMonth, day: startDay, hour: startHour, minute: startMinute },
+          end: { year: endYear, month: endMonth, day: endDay, hour: endHour, minute: endMinute }
+        });
         throw new Error('Invalid date or time components');
       }
 
