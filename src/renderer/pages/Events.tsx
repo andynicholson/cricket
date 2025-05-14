@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { MapPin, Calendar, Users, Clock, Plus } from 'react-feather';
+import { getEvents } from '../../shared/firestore';
+import type { Event } from '../../shared/types';
+import { Timestamp } from 'firebase/firestore';
 
 const EventsContainer = styled.div`
   display: flex;
@@ -76,6 +79,18 @@ const EventTitle = styled.h3`
   margin-bottom: 8px;
 `;
 
+const EventDescription = styled.p`
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
 const EventInfo = styled.div`
   display: flex;
   flex-direction: column;
@@ -123,37 +138,109 @@ const JoinButton = styled.button`
   }
 `;
 
+const TimeRange = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #4b5563;
+  font-size: 14px;
+`;
+
+const Duration = styled.span`
+  color: #6b7280;
+  font-size: 13px;
+`;
+
+const DateRange = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #4b5563;
+  font-size: 14px;
+`;
+
 const Events: React.FC = () => {
-  // Mock data for demonstration
-  const events = [
-    {
-      id: 1,
-      title: 'Morning Trail Run',
-      date: 'March 20, 2024',
-      time: '06:00 AM',
-      location: 'Redwood Regional Park',
-      participants: 12,
-      image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
-    },
-    {
-      id: 2,
-      title: 'Weekend Long Run',
-      date: 'March 23, 2024',
-      time: '08:00 AM',
-      location: 'Mount Tamalpais',
-      participants: 8,
-      image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
-    },
-    {
-      id: 3,
-      title: 'Race Planning Meeting',
-      date: 'March 25, 2024',
-      time: '07:00 PM',
-      location: 'Trail Runner\'s Cafe',
-      participants: 5,
-      image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const loadedEvents = await getEvents();
+        console.log('Raw events from Firestore:', loadedEvents);
+        // Convert Firestore Timestamps to Date objects and filter for upcoming events
+        const now = new Date();
+        const processedEvents = loadedEvents
+          .map(event => ({
+            ...event,
+            startTime: event.startTime instanceof Timestamp 
+              ? event.startTime.toDate() 
+              : new Date(event.startTime),
+            endTime: event.endTime instanceof Timestamp 
+              ? event.endTime.toDate() 
+              : new Date(event.endTime)
+          }))
+          .filter(event => event.startTime > now)
+          .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()); // Sort by start time
+
+        console.log('Processed upcoming events:', processedEvents);
+        setEvents(processedEvents);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading events:', err);
+        setError('Failed to load events. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  const formatDuration = (start: Date, end: Date) => {
+    const durationMs = end.getTime() - start.getTime();
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours === 0) {
+      return `${minutes} min`;
+    } else if (minutes === 0) {
+      return `${hours} hr`;
+    } else {
+      return `${hours} hr ${minutes} min`;
     }
-  ];
+  };
+
+  const isSameDay = (date1: Date, date2: Date) => {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  };
+
+  if (loading) {
+    return <div>Loading events...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return (
     <EventsContainer>
@@ -168,17 +255,26 @@ const Events: React.FC = () => {
       <EventsGrid>
         {events.map(event => (
           <EventCard key={event.id}>
-            <EventImage />
+            <EventImage style={{ backgroundImage: `url(${event.image})` }} />
             <EventContent>
               <EventTitle>{event.title}</EventTitle>
+              <EventDescription>{event.description}</EventDescription>
               <EventInfo>
                 <InfoItem>
                   <Calendar size={16} />
-                  {event.date}
+                  <DateRange>
+                    {isSameDay(event.startTime, event.endTime) 
+                      ? formatDate(event.startTime)
+                      : `${formatDate(event.startTime)} - ${formatDate(event.endTime)}`
+                    }
+                  </DateRange>
                 </InfoItem>
                 <InfoItem>
                   <Clock size={16} />
-                  {event.time}
+                  <TimeRange>
+                    {formatTime(event.startTime)} - {formatTime(event.endTime)}
+                    <Duration>({formatDuration(event.startTime, event.endTime)})</Duration>
+                  </TimeRange>
                 </InfoItem>
                 <InfoItem>
                   <MapPin size={16} />
@@ -189,7 +285,7 @@ const Events: React.FC = () => {
             <EventFooter>
               <Participants>
                 <Users size={16} />
-                {event.participants} participants
+                {Array.isArray(event.participants) ? event.participants.filter(p => p && p.trim() !== '').length : 0} {event.participants.filter(p => p && p.trim() !== '').length === 1 ? 'participant' : 'participants'}
               </Participants>
               <JoinButton>Join</JoinButton>
             </EventFooter>

@@ -5,6 +5,8 @@ export interface Event {
   startTime: Date;
   endTime: Date;
   participants: string[];
+  location: string;
+  image: string;
 }
 
 export interface Message {
