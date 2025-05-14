@@ -404,6 +404,24 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, required 
   const [currentDate, setCurrentDate] = useState(new Date());
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  const isDateDisabled = (date: Date) => {
+    if (!min) return false;
+    const minDate = new Date(min);
+    minDate.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    return checkDate < minDate;  // Only disable dates before today
+  };
+
+  useEffect(() => {
+    console.log('DatePicker - Initial props:', {
+      value,
+      min,
+      required,
+      currentDate: currentDate.toISOString()
+    });
+  }, [value, min, required]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -416,17 +434,39 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, required 
   }, []);
 
   const formatDateForDisplay = (date: Date) => {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    try {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      const formatted = `${day}/${month}/${year}`;
+      console.log('DatePicker - Formatting date for display:', {
+        input: date,
+        formatted,
+        isValid: !isNaN(date.getTime())
+      });
+      return formatted;
+    } catch (error) {
+      console.error('Error formatting date for display:', error);
+      return '';
+    }
   };
 
   const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    try {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formatted = `${year}-${month}-${day}`;
+      console.log('DatePicker - Formatting date for input:', {
+        input: date,
+        formatted,
+        isValid: !isNaN(date.getTime())
+      });
+      return formatted;
+    } catch (error) {
+      console.error('Error formatting date for input:', error);
+      return '';
+    }
   };
 
   const handleDateSelect = (date: Date) => {
@@ -440,16 +480,21 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, required 
       // Check minimum date if provided
       if (min) {
         const minDate = new Date(min);
-        if (date < minDate) {
+        minDate.setHours(0, 0, 0, 0);
+        const checkDate = new Date(date);
+        checkDate.setHours(0, 0, 0, 0);
+        if (checkDate < minDate) {
           console.warn('Selected date is before minimum date');
           return;
         }
       }
 
       const formattedDate = formatDateForInput(date);
-      console.log('Selected date:', {
+      console.log('DatePicker - Selected date:', {
         original: date,
-        formatted: formattedDate
+        formatted: formattedDate,
+        min: min,
+        isValid: !isNaN(date.getTime())
       });
       
       onChange(formattedDate);
@@ -473,7 +518,8 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, required 
         <DatePickerCell
           key={`prev-${i}`}
           $isOtherMonth
-          onClick={() => handleDateSelect(date)}
+          $isDisabled={isDateDisabled(date)}
+          onClick={() => !isDateDisabled(date) && handleDateSelect(date)}
         >
           {date.getDate()}
         </DatePickerCell>
@@ -485,7 +531,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, required 
       const date = new Date(year, month, i);
       const isSelected = formatDateForInput(date) === value;
       const isToday = new Date().toDateString() === date.toDateString();
-      const isDisabled = min ? date < new Date(min) : false;
+      const isDisabled = isDateDisabled(date);
 
       days.push(
         <DatePickerCell
@@ -508,7 +554,8 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, required 
         <DatePickerCell
           key={`next-${i}`}
           $isOtherMonth
-          onClick={() => handleDateSelect(date)}
+          $isDisabled={isDateDisabled(date)}
+          onClick={() => !isDateDisabled(date) && handleDateSelect(date)}
         >
           {date.getDate()}
         </DatePickerCell>
@@ -519,28 +566,44 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min, required 
   };
 
   return (
-    <DatePickerWrapper ref={wrapperRef}>
+    <DatePickerWrapper ref={wrapperRef} onClick={(e) => e.stopPropagation()}>
       <DatePickerInput
         type="text"
         value={value ? formatDateForDisplay(new Date(value)) : ''}
         onChange={() => {}}
-        onClick={() => setIsOpen(true)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen(true);
+        }}
         placeholder="DD/MM/YYYY"
         required={required}
         readOnly
       />
-      <CalendarButton onClick={() => setIsOpen(!isOpen)}>
+      <CalendarButton onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsOpen(!isOpen);
+      }}>
         <CalendarIcon size={16} />
       </CalendarButton>
       {isOpen && (
-        <DatePickerDropdown>
+        <DatePickerDropdown onClick={(e) => e.stopPropagation()}>
           <DatePickerHeader>
             <MonthYearSelector>
-              <MonthYearButton onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}>
+              <MonthYearButton onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
+              }}>
                 <ChevronLeft size={16} />
               </MonthYearButton>
               {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-              <MonthYearButton onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}>
+              <MonthYearButton onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+              }}>
                 <ChevronRight size={16} />
               </MonthYearButton>
             </MonthYearSelector>
@@ -581,18 +644,20 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     return `${year}-${month}-${day}`;
   };
 
-  const getInitialValues = () => ({
-    title: '',
-    description: '',
-    location: '',
-    startDate: selectedDate ? formatDateForInput(selectedDate) : '',
-    startTime: '09:00',
-    endDate: '',
-    endTime: '17:00',
-    image: '',
-    error: null,
-    isSubmitting: false
-  });
+  const getInitialValues = () => {
+    return {
+      title: '',
+      description: '',
+      location: '',
+      startDate: selectedDate ? formatDateForInput(selectedDate) : '',
+      startTime: '09:00',
+      endDate: '',
+      endTime: '17:00',
+      image: '',
+      error: null,
+      isSubmitting: false
+    };
+  };
 
   const [title, setTitle] = useState(getInitialValues().title);
   const [description, setDescription] = useState(getInitialValues().description);
@@ -638,6 +703,18 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       return 'Start date cannot be in the past';
     }
 
+    // For same-day events, check the time
+    if (startDate.toDateString() === endDate.toDateString()) {
+      const [startHour, startMinute] = startTime.split(':').map(Number);
+      const [endHour, endMinute] = endTime.split(':').map(Number);
+      
+      if (endHour < startHour || (endHour === startHour && endMinute <= startMinute)) {
+        return 'End time must be after start time for same-day events';
+      }
+      return null;
+    }
+
+    // For different days, just check the date
     if (endDate < startDate) {
       return 'End date must be after start date';
     }
@@ -691,8 +768,19 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         location
       });
 
+      // Add validation logging
+      if (!startDate) {
+        console.error('Start date is missing');
+        throw new Error('Start date is required');
+      }
+      if (!endDate) {
+        console.error('End date is missing');
+        throw new Error('End date is required');
+      }
+
       const dateError = validateDates(startDate, endDate);
       if (dateError) {
+        console.error('Date validation error:', dateError);
         setError(dateError);
         setIsSubmitting(false);
         return;
@@ -705,29 +793,21 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
       const [endHour, endMinute] = (endTime || '17:00').split(':').map(Number);
 
-      // Log raw values for debugging
-      console.log('Raw date values:', {
-        startDate,
-        startTime,
-        endDate,
-        endTime
-      });
-
-      // Log parsed components with their types
+      // Log parsed components with their types and raw values
       console.log('Parsed date components:', {
         start: {
-          year: { value: startYear, type: typeof startYear },
-          month: { value: startMonth, type: typeof startMonth },
-          day: { value: startDay, type: typeof startDay },
-          hour: { value: startHour, type: typeof startHour },
-          minute: { value: startMinute, type: typeof startMinute }
+          year: { value: startYear, type: typeof startYear, raw: startDate.split('-')[0] },
+          month: { value: startMonth, type: typeof startMonth, raw: startDate.split('-')[1] },
+          day: { value: startDay, type: typeof startDay, raw: startDate.split('-')[2] },
+          hour: { value: startHour, type: typeof startHour, raw: startTime?.split(':')[0] },
+          minute: { value: startMinute, type: typeof startMinute, raw: startTime?.split(':')[1] }
         },
         end: {
-          year: { value: endYear, type: typeof endYear },
-          month: { value: endMonth, type: typeof endMonth },
-          day: { value: endDay, type: typeof endDay },
-          hour: { value: endHour, type: typeof endHour },
-          minute: { value: endMinute, type: typeof endMinute }
+          year: { value: endYear, type: typeof endYear, raw: endDate.split('-')[0] },
+          month: { value: endMonth, type: typeof endMonth, raw: endDate.split('-')[1] },
+          day: { value: endDay, type: typeof endDay, raw: endDate.split('-')[2] },
+          hour: { value: endHour, type: typeof endHour, raw: endTime?.split(':')[0] },
+          minute: { value: endMinute, type: typeof endMinute, raw: endTime?.split(':')[1] }
         }
       });
 
@@ -804,6 +884,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       });
 
       await addEvent(newEvent);
+      resetForm();  // Reset the form after successful submission
       onEventCreated();
       onClose();
     } catch (err) {
@@ -868,7 +949,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               <DatePicker
                 value={startDate}
                 onChange={handleStartDateChange}
-                min={formatDateForInput(new Date())}
+                min={formatDateForInput(new Date(new Date().setHours(0, 0, 0, 0)))}
                 required
               />
             </FormGroup>
