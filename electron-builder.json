@@ -1,0 +1,20 @@
+{
+  "appId": "com.cricket.app",
+  "productName": "Cricket",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    ".vite/**/*",
+    "package.json"
+  ],
+  "mac": {
+    "category": "public.app-category.productivity"
+  },
+  "win": {
+    "target": "nsis"
+  },
+  "linux": {
+    "target": "AppImage"
+  }
+} 
