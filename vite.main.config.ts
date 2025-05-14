@@ -6,9 +6,12 @@ export default defineConfig({
     outDir: '.vite/main',
     emptyOutDir: true,
     lib: {
-      entry: path.resolve(__dirname, 'src/main/index.ts'),
+      entry: {
+        main: path.resolve(__dirname, 'src/main/index.ts'),
+        preload: path.resolve(__dirname, 'src/preload/preload.ts')
+      },
       formats: ['cjs'],
-      fileName: () => 'main.js',
+      fileName: (format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
       external: ['electron'],

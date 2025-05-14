@@ -574,17 +574,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   onEventCreated,
   selectedDate 
 }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [startTime, setStartTime] = useState('09:00');
-  const [endDate, setEndDate] = useState('');
-  const [endTime, setEndTime] = useState('17:00');
-  const [image, setImage] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const formatDateForInput = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -592,15 +581,54 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     return `${year}-${month}-${day}`;
   };
 
-  useEffect(() => {
-    if (selectedDate) {
-      const dateStr = selectedDate.toISOString().split('T')[0];
-      setStartDate(dateStr);
-      setEndDate(dateStr);
-    }
-  }, [selectedDate]);
+  const getInitialValues = () => ({
+    title: '',
+    description: '',
+    location: '',
+    startDate: selectedDate ? formatDateForInput(selectedDate) : '',
+    startTime: '09:00',
+    endDate: '',
+    endTime: '17:00',
+    image: '',
+    error: null,
+    isSubmitting: false
+  });
+
+  const [title, setTitle] = useState(getInitialValues().title);
+  const [description, setDescription] = useState(getInitialValues().description);
+  const [location, setLocation] = useState(getInitialValues().location);
+  const [startDate, setStartDate] = useState(getInitialValues().startDate);
+  const [startTime, setStartTime] = useState(getInitialValues().startTime);
+  const [endDate, setEndDate] = useState(getInitialValues().endDate);
+  const [endTime, setEndTime] = useState(getInitialValues().endTime);
+  const [image, setImage] = useState(getInitialValues().image);
+  const [error, setError] = useState<string | null>(getInitialValues().error);
+  const [isSubmitting, setIsSubmitting] = useState(getInitialValues().isSubmitting);
+
+  const resetForm = () => {
+    const initialValues = getInitialValues();
+    setTitle(initialValues.title);
+    setDescription(initialValues.description);
+    setLocation(initialValues.location);
+    setStartDate(initialValues.startDate);
+    setStartTime(initialValues.startTime);
+    setEndDate(initialValues.endDate);
+    setEndTime(initialValues.endTime);
+    setImage(initialValues.image);
+    setError(initialValues.error);
+    setIsSubmitting(initialValues.isSubmitting);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const validateDates = (start: string, end: string) => {
+    if (!start || !end) {
+      return null; // Don't show error if dates aren't set yet
+    }
+
     const startDate = new Date(start);
     const endDate = new Date(end);
     const now = new Date();
@@ -619,23 +647,12 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   const handleStartDateChange = (newStartDate: string) => {
     setStartDate(newStartDate);
-    
-    // If end date is before new start date, update it
-    if (endDate && newStartDate > endDate) {
-      setEndDate(newStartDate);
-    }
-
-    // Validate dates
-    const dateError = validateDates(newStartDate, endDate);
-    setError(dateError);
+    setError(null); // Clear any previous errors
   };
 
   const handleEndDateChange = (newEndDate: string) => {
     setEndDate(newEndDate);
-
-    // Validate dates
-    const dateError = validateDates(startDate, newEndDate);
-    setError(dateError);
+    setError(null); // Clear any previous errors
   };
 
   const searchUnsplashImage = async (query: string): Promise<string> => {
@@ -688,6 +705,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
       const [endHour, endMinute] = (endTime || '17:00').split(':').map(Number);
 
+      // Log raw values for debugging
+      console.log('Raw date values:', {
+        startDate,
+        startTime,
+        endDate,
+        endTime
+      });
+
       // Log parsed components with their types
       console.log('Parsed date components:', {
         start: {
@@ -706,16 +731,25 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         }
       });
 
-      // Validate parsed components
-      if (isNaN(startYear) || isNaN(startMonth) || isNaN(startDay) || 
-          isNaN(startHour) || isNaN(startMinute) ||
-          isNaN(endYear) || isNaN(endMonth) || isNaN(endDay) || 
-          isNaN(endHour) || isNaN(endMinute)) {
-        console.error('Invalid date components:', {
-          start: { year: startYear, month: startMonth, day: startDay, hour: startHour, minute: startMinute },
-          end: { year: endYear, month: endMonth, day: endDay, hour: endHour, minute: endMinute }
-        });
-        throw new Error('Invalid date or time components');
+      // Validate parsed components with specific error messages
+      if (!startDate || !endDate) {
+        throw new Error('Start date and end date are required');
+      }
+
+      if (isNaN(startYear) || isNaN(startMonth) || isNaN(startDay)) {
+        throw new Error('Invalid start date format. Please use YYYY-MM-DD format.');
+      }
+
+      if (isNaN(endYear) || isNaN(endMonth) || isNaN(endDay)) {
+        throw new Error('Invalid end date format. Please use YYYY-MM-DD format.');
+      }
+
+      if (isNaN(startHour) || isNaN(startMinute)) {
+        throw new Error('Invalid start time format. Please use HH:MM format.');
+      }
+
+      if (isNaN(endHour) || isNaN(endMinute)) {
+        throw new Error('Invalid end time format. Please use HH:MM format.');
       }
 
       // Create Date objects with explicit values
@@ -783,11 +817,11 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <ModalOverlay onClick={onClose}>
+    <ModalOverlay onClick={handleClose}>
       <Modal onClick={e => e.stopPropagation()}>
         <ModalHeader>
           <ModalTitle>Create New Event</ModalTitle>
-          <CloseButton onClick={onClose}>
+          <CloseButton onClick={handleClose}>
             <X size={20} />
           </CloseButton>
         </ModalHeader>

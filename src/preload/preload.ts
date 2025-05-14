@@ -6,7 +6,10 @@ contextBridge.exposeInMainWorld(
   'electron',
   {
     getVersion: () => ipcRenderer.invoke('app:get-version'),
-    searchUnsplash: (query: string) => ipcRenderer.invoke('search-unsplash', query)
+    searchUnsplash: (query: string) => {
+      console.log('Preload: Calling searchUnsplash with query:', query);
+      return ipcRenderer.invoke('search-unsplash', query);
+    }
   }
 );
 
