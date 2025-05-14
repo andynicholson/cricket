@@ -4,6 +4,7 @@ import { MapPin, Calendar, Users, Clock, Plus } from 'react-feather';
 import { getEvents } from '../../shared/firestore';
 import type { Event } from '../../shared/types';
 import { Timestamp } from 'firebase/firestore';
+import { CreateEventModal } from './Calendar'; // Update the import to use named import
 
 const EventsContainer = styled.div`
   display: flex;
@@ -163,6 +164,7 @@ const Events: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -182,7 +184,7 @@ const Events: React.FC = () => {
               : new Date(event.endTime)
           }))
           .filter(event => event.startTime > now)
-          .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()); // Sort by start time
+          .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
 
         console.log('Processed upcoming events:', processedEvents);
         setEvents(processedEvents);
@@ -215,16 +217,41 @@ const Events: React.FC = () => {
   };
 
   const formatDuration = (start: Date, end: Date) => {
+    // Get the total duration in milliseconds
     const durationMs = end.getTime() - start.getTime();
-    const hours = Math.floor(durationMs / (1000 * 60 * 60));
-    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    // Calculate total hours and minutes
+    const totalMinutes = Math.floor(durationMs / (1000 * 60));
+    const totalHours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    // Check if it's a single day event
+    const isSameDay = start.getDate() === end.getDate() && 
+                     start.getMonth() === end.getMonth() && 
+                     start.getFullYear() === end.getFullYear();
 
-    if (hours === 0) {
-      return `${minutes} min`;
-    } else if (minutes === 0) {
-      return `${hours} hr`;
+    if (isSameDay) {
+      // For single day events, just show hours and minutes
+      if (totalHours === 0) {
+        return `${minutes} min`;
+      } else if (minutes === 0) {
+        return `${totalHours} hr`;
+      } else {
+        return `${totalHours} hr ${minutes} min`;
+      }
     } else {
-      return `${hours} hr ${minutes} min`;
+      // For multi-day events, calculate days and remaining hours
+      const days = Math.floor(totalHours / 24) + 1;
+      const hours = totalHours % 24;
+
+      const parts = [];
+      parts.push(days === 1 ? '1 day' : `${days} days`);
+      
+      if (hours > 0) {
+        parts.push(`${hours} hr`);
+      }
+      
+      return parts.join(' ');
     }
   };
 
@@ -232,6 +259,28 @@ const Events: React.FC = () => {
     return date1.getFullYear() === date2.getFullYear() &&
            date1.getMonth() === date2.getMonth() &&
            date1.getDate() === date2.getDate();
+  };
+
+  const handleEventCreated = async () => {
+    try {
+      const loadedEvents = await getEvents();
+      const now = new Date();
+      const processedEvents = loadedEvents
+        .map(event => ({
+          ...event,
+          startTime: event.startTime instanceof Timestamp 
+            ? event.startTime.toDate() 
+            : new Date(event.startTime),
+          endTime: event.endTime instanceof Timestamp 
+            ? event.endTime.toDate() 
+            : new Date(event.endTime)
+        }))
+        .filter(event => event.startTime > now)
+        .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+      setEvents(processedEvents);
+    } catch (err) {
+      console.error('Error refreshing events:', err);
+    }
   };
 
   if (loading) {
@@ -246,7 +295,7 @@ const Events: React.FC = () => {
     <EventsContainer>
       <Header>
         <Title>Upcoming Events</Title>
-        <Button>
+        <Button onClick={() => setIsCreateModalOpen(true)}>
           <Plus size={20} />
           Create Event
         </Button>
@@ -292,6 +341,12 @@ const Events: React.FC = () => {
           </EventCard>
         ))}
       </EventsGrid>
+
+      <CreateEventModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onEventCreated={handleEventCreated}
+      />
     </EventsContainer>
   );
 };

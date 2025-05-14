@@ -6,6 +6,9 @@ contextBridge.exposeInMainWorld(
   'electron',
   {
     getVersion: () => ipcRenderer.invoke('app:get-version'),
-    // Add more IPC methods here as needed
+    searchUnsplash: (query: string) => ipcRenderer.invoke('search-unsplash', query)
   }
-); 
+);
+
+// Log when the preload script is loaded
+console.log('Preload script loaded, electron API exposed'); 
