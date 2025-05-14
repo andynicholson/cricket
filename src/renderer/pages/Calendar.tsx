@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { ChevronLeft, ChevronRight, Plus } from 'react-feather';
+import { getEvents } from '../../shared/firestore';
+import type { Event as EventType } from '../../shared/types';
 
 const CalendarContainer = styled.div`
   display: flex;
@@ -129,26 +131,81 @@ const Event = styled.div`
 `;
 
 const Calendar: React.FC = () => {
-  // Mock data for demonstration
-  const events = [
-    { id: 1, title: 'Morning Trail Run', date: '2024-03-20', time: '06:00' },
-    { id: 2, title: 'Weekend Long Run', date: '2024-03-23', time: '08:00' },
-    { id: 3, title: 'Race Planning', date: '2024-03-25', time: '19:00' },
-  ];
+  const [events, setEvents] = useState<EventType[]>([]);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      const loadedEvents = await getEvents();
+      setEvents(loadedEvents);
+    };
+    loadEvents();
+  }, []);
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const renderCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentDate);
+    const firstDayOfMonth = getFirstDayOfMonth(currentDate);
+    const days = [];
+
+    // Add days from the previous month
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(
+        <CalendarDay key={`prev-${i}`} isOtherMonth>
+          <DayNumber>{new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate() - firstDayOfMonth + i + 1}</DayNumber>
+        </CalendarDay>
+      );
+    }
+
+    // Add days from the current month
+    for (let i = 1; i <= daysInMonth; i++) {
+      const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), i).toDateString();
+      days.push(
+        <CalendarDay key={i} isToday={isToday}>
+          <DayNumber>{i}</DayNumber>
+          {events.filter(event => {
+            const eventDate = new Date(event.startTime);
+            return eventDate.getDate() === i && eventDate.getMonth() === currentDate.getMonth() && eventDate.getFullYear() === currentDate.getFullYear();
+          }).map(event => (
+            <Event key={event.id}>{event.title}</Event>
+          ))}
+        </CalendarDay>
+      );
+    }
+
+    // Add days from the next month
+    const totalDays = 42; // 6 rows of 7 days
+    for (let i = 1; i <= totalDays - (firstDayOfMonth + daysInMonth); i++) {
+      days.push(
+        <CalendarDay key={`next-${i}`} isOtherMonth>
+          <DayNumber>{i}</DayNumber>
+        </CalendarDay>
+      );
+    }
+
+    return days;
+  };
 
   return (
     <CalendarContainer>
       <Header>
-        <Title>March 2024</Title>
+        <Title>{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</Title>
         <Controls>
-          <IconButton>
+          <IconButton onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}>
             <ChevronLeft size={20} />
           </IconButton>
           <Button>
             <Plus size={20} />
             New Event
           </Button>
-          <IconButton>
+          <IconButton onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}>
             <ChevronRight size={20} />
           </IconButton>
         </Controls>
@@ -165,34 +222,7 @@ const Calendar: React.FC = () => {
       </CalendarHeader>
 
       <CalendarGrid>
-        {/* Calendar days would be generated here */}
-        <CalendarDay isOtherMonth>
-          <DayNumber>25</DayNumber>
-        </CalendarDay>
-        <CalendarDay isOtherMonth>
-          <DayNumber>26</DayNumber>
-        </CalendarDay>
-        <CalendarDay isOtherMonth>
-          <DayNumber>27</DayNumber>
-        </CalendarDay>
-        <CalendarDay isOtherMonth>
-          <DayNumber>28</DayNumber>
-        </CalendarDay>
-        <CalendarDay isOtherMonth>
-          <DayNumber>29</DayNumber>
-        </CalendarDay>
-        <CalendarDay>
-          <DayNumber>1</DayNumber>
-        </CalendarDay>
-        <CalendarDay>
-          <DayNumber>2</DayNumber>
-        </CalendarDay>
-        {/* ... more days ... */}
-        <CalendarDay isToday>
-          <DayNumber>20</DayNumber>
-          <Event>Morning Trail Run</Event>
-        </CalendarDay>
-        {/* ... more days ... */}
+        {renderCalendarDays()}
       </CalendarGrid>
     </CalendarContainer>
   );
