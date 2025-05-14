@@ -73,10 +73,22 @@ const CalendarHeader = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+`;
+
+const CalendarHeaderCell = styled.div`
   padding: 12px;
   text-align: center;
   font-weight: 500;
   color: #4b5563;
+  border-right: 1px solid #e5e7eb;
+
+  &:last-child {
+    border-right: none;
+  }
 `;
 
 const CalendarDay = styled.div<{ isToday?: boolean; isOtherMonth?: boolean }>`
@@ -142,17 +154,17 @@ const Calendar: React.FC = () => {
         </Controls>
       </Header>
 
-      <CalendarGrid>
-        <CalendarHeader>
-          <div>Sun</div>
-          <div>Mon</div>
-          <div>Tue</div>
-          <div>Wed</div>
-          <div>Thu</div>
-          <div>Fri</div>
-          <div>Sat</div>
-        </CalendarHeader>
+      <CalendarHeader>
+        <CalendarHeaderCell>Sun</CalendarHeaderCell>
+        <CalendarHeaderCell>Mon</CalendarHeaderCell>
+        <CalendarHeaderCell>Tue</CalendarHeaderCell>
+        <CalendarHeaderCell>Wed</CalendarHeaderCell>
+        <CalendarHeaderCell>Thu</CalendarHeaderCell>
+        <CalendarHeaderCell>Fri</CalendarHeaderCell>
+        <CalendarHeaderCell>Sat</CalendarHeaderCell>
+      </CalendarHeader>
 
+      <CalendarGrid>
         {/* Calendar days would be generated here */}
         <CalendarDay isOtherMonth>
           <DayNumber>25</DayNumber>
