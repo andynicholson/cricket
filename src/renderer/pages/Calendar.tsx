@@ -116,18 +116,40 @@ const DayNumber = styled.div`
   margin-bottom: 8px;
 `;
 
-const Event = styled.div`
+const Event = styled.div<{ $isFirstDay?: boolean; $isLastDay?: boolean; $isMultiDay?: boolean }>`
   background-color: #2563eb;
   color: white;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: ${props => {
+    if (props.$isMultiDay) {
+      if (props.$isFirstDay) return '4px 0 0 4px';
+      if (props.$isLastDay) return '0 4px 4px 0';
+      return '0';
+    }
+    return '4px';
+  }};
   font-size: 12px;
   margin-bottom: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
 
   &:hover {
     background-color: #1d4ed8;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to right, transparent, ${props => props.$isLastDay ? '#1d4ed8' : '#2563eb'});
+    pointer-events: none;
   }
 `;
 
@@ -144,12 +166,24 @@ const Calendar: React.FC = () => {
         // Convert Firestore Timestamps to Date objects
         const processedEvents = loadedEvents.map(event => {
           try {
+            // Ensure we're working with UTC dates to avoid timezone issues
             const startTime = event.startTime instanceof Timestamp 
-              ? event.startTime.toDate() 
-              : new Date(event.startTime);
+              ? new Date(event.startTime.toDate().toISOString())
+              : new Date(new Date(event.startTime).toISOString());
             const endTime = event.endTime instanceof Timestamp 
-              ? event.endTime.toDate() 
-              : new Date(event.endTime);
+              ? new Date(event.endTime.toDate().toISOString())
+              : new Date(new Date(event.endTime).toISOString());
+            
+            console.log('Processing event dates:', {
+              id: event.id,
+              title: event.title,
+              originalStart: event.startTime,
+              originalEnd: event.endTime,
+              processedStart: startTime.toISOString(),
+              processedEnd: endTime.toISOString(),
+              startDay: startTime.getDate(),
+              endDay: endTime.getDate()
+            });
             
             // Validate dates
             if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
@@ -185,6 +219,28 @@ const Calendar: React.FC = () => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
 
+  const isSameDay = (date1: Date, date2: Date) => {
+    const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+    const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+    return d1.getTime() === d2.getTime();
+  };
+
+  const isDateInRange = (date: Date, start: Date, end: Date) => {
+    const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    return checkDate >= startDate && checkDate <= endDate;
+  };
+
+  const getDayNumber = (currentDate: Date, startDate: Date) => {
+    // Create date objects with time set to midnight to ensure consistent day calculation
+    const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const current = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+    const diffTime = current.getTime() - start.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays + 1;
+  };
+
   const renderCalendarDays = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDayOfMonth = getFirstDayOfMonth(currentDate);
@@ -192,50 +248,52 @@ const Calendar: React.FC = () => {
 
     // Add days from the previous month
     for (let i = 0; i < firstDayOfMonth; i++) {
+      const prevMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0 - firstDayOfMonth + i + 1);
+      const dayEvents = events.filter(event => 
+        isDateInRange(prevMonthDate, event.startTime, event.endTime)
+      );
+
       days.push(
         <CalendarDay key={`prev-${i}`} $isOtherMonth>
-          <DayNumber>{new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate() - firstDayOfMonth + i + 1}</DayNumber>
+          <DayNumber>{prevMonthDate.getDate()}</DayNumber>
+          {dayEvents.map(event => (
+            <Event 
+              key={event.id}
+              $isFirstDay={isSameDay(prevMonthDate, event.startTime)}
+              $isLastDay={isSameDay(prevMonthDate, event.endTime)}
+              $isMultiDay={!isSameDay(event.startTime, event.endTime)}
+            >
+              {!isSameDay(event.startTime, event.endTime) && 
+                `Day ${getDayNumber(prevMonthDate, event.startTime)}: `}
+              {event.title}
+            </Event>
+          ))}
         </CalendarDay>
       );
     }
 
     // Add days from the current month
     for (let i = 1; i <= daysInMonth; i++) {
-      const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), i).toDateString();
-      const dayEvents = events.filter(event => {
-        try {
-          const eventDate = new Date(event.startTime);
-          if (isNaN(eventDate.getTime())) {
-            console.error('Invalid event date:', event);
-            return false;
-          }
-
-          const currentDayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
-          const matches = eventDate.getDate() === i && 
-                         eventDate.getMonth() === currentDate.getMonth() && 
-                         eventDate.getFullYear() === currentDate.getFullYear();
-
-          console.log(`Checking event for day ${i}:`, {
-            eventDate: eventDate.toString(),
-            currentDate: currentDayDate.toString(),
-            matches
-          });
-
-          if (matches) {
-            console.log(`Found event for day ${i}:`, event);
-          }
-          return matches;
-        } catch (error) {
-          console.error('Error processing event date:', event, error);
-          return false;
-        }
-      });
+      const currentDayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
+      const isToday = new Date().toDateString() === currentDayDate.toDateString();
+      const dayEvents = events.filter(event => 
+        isDateInRange(currentDayDate, event.startTime, event.endTime)
+      );
 
       days.push(
         <CalendarDay key={i} $isToday={isToday}>
           <DayNumber>{i}</DayNumber>
           {dayEvents.map(event => (
-            <Event key={event.id}>{event.title}</Event>
+            <Event 
+              key={event.id}
+              $isFirstDay={isSameDay(currentDayDate, event.startTime)}
+              $isLastDay={isSameDay(currentDayDate, event.endTime)}
+              $isMultiDay={!isSameDay(event.startTime, event.endTime)}
+            >
+              {!isSameDay(event.startTime, event.endTime) && 
+                `Day ${getDayNumber(currentDayDate, event.startTime)}: `}
+              {event.title}
+            </Event>
           ))}
         </CalendarDay>
       );
@@ -244,9 +302,26 @@ const Calendar: React.FC = () => {
     // Add days from the next month
     const totalDays = 42; // 6 rows of 7 days
     for (let i = 1; i <= totalDays - (firstDayOfMonth + daysInMonth); i++) {
+      const nextMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, i);
+      const dayEvents = events.filter(event => 
+        isDateInRange(nextMonthDate, event.startTime, event.endTime)
+      );
+
       days.push(
         <CalendarDay key={`next-${i}`} $isOtherMonth>
           <DayNumber>{i}</DayNumber>
+          {dayEvents.map(event => (
+            <Event 
+              key={event.id}
+              $isFirstDay={isSameDay(nextMonthDate, event.startTime)}
+              $isLastDay={isSameDay(nextMonthDate, event.endTime)}
+              $isMultiDay={!isSameDay(event.startTime, event.endTime)}
+            >
+              {!isSameDay(event.startTime, event.endTime) && 
+                `Day ${getDayNumber(nextMonthDate, event.startTime)}: `}
+              {event.title}
+            </Event>
+          ))}
         </CalendarDay>
       );
     }
