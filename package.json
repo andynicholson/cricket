@@ -10,7 +10,7 @@
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
     "test": "jest",
-    "dev": "concurrently \"vite\" \"electron .\"",
+    "dev": "electron-forge start",
     "build": "tsc && vite build && electron-builder",
     "preview": "vite preview"
   },
@@ -30,6 +30,8 @@
     "tailwindcss": "^3.4.1"
   },
   "devDependencies": {
+    "@babel/preset-react": "^7.27.1",
+    "@babel/preset-typescript": "^7.27.1",
     "@electron-forge/cli": "^7.2.0",
     "@electron-forge/maker-deb": "^7.2.0",
     "@electron-forge/maker-rpm": "^7.2.0",
@@ -45,6 +47,7 @@
     "@typescript-eslint/parser": "^7.0.1",
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.17",
+    "babel-plugin-styled-components": "^2.1.4",
     "concurrently": "^9.1.2",
     "electron": "^28.2.3",
     "eslint": "^8.56.0",
@@ -54,6 +57,7 @@
     "postcss": "^8.4.35",
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3",
-    "vite": "^5.4.19"
+    "vite": "^5.4.19",
+    "wait-on": "^8.0.3"
   }
 }

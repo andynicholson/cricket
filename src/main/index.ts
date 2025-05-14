@@ -19,11 +19,13 @@ function createWindow() {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           "default-src 'self'",
-          "script-src 'self'",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:*",
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: https:",
-          "connect-src 'self'"
-        ]
+          "connect-src 'self' http://localhost:* ws://localhost:*",
+          "font-src 'self'",
+          "worker-src 'self' blob:"
+        ].join('; ')
       }
     });
   });
@@ -31,11 +33,13 @@ function createWindow() {
   // Load the index.html file
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 }
+
+// Set development mode
+process.env.NODE_ENV = 'development';
 
 app.whenReady().then(() => {
   createWindow();

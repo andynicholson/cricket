@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import styled from 'styled-components';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
@@ -29,22 +29,20 @@ const ContentArea = styled.div`
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <AppContainer>
-        <Sidebar />
-        <MainContent>
-          <TopBar />
-          <ContentArea>
-            <Routes>
-              <Route path="/" element={<Calendar />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/profile" element={<Profile />} />
-            </Routes>
-          </ContentArea>
-        </MainContent>
-      </AppContainer>
-    </Router>
+    <AppContainer>
+      <Sidebar />
+      <MainContent>
+        <TopBar />
+        <ContentArea>
+          <Routes>
+            <Route path="/" element={<Calendar />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        </ContentArea>
+      </MainContent>
+    </AppContainer>
   );
 };
 

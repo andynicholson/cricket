@@ -1,18 +1,17 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import path from 'path';
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-    },
-  },
   build: {
     outDir: '.vite/main',
+    emptyOutDir: true,
+    lib: {
+      entry: path.resolve(__dirname, 'src/main/index.ts'),
+      formats: ['cjs'],
+      fileName: () => 'main.js',
+    },
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'src/main/main.ts'),
-      },
+      external: ['electron'],
     },
   },
 }); 
