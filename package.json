@@ -9,18 +9,24 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "test": "jest"
+    "test": "jest",
+    "dev": "concurrently \"vite\" \"electron .\"",
+    "build": "tsc && vite build && electron-builder",
+    "preview": "vite preview"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.1",
+    "@types/styled-components": "^5.1.34",
     "electron-squirrel-startup": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-feather": "^2.0.10",
     "react-redux": "^9.1.0",
     "react-router-dom": "^6.22.1",
     "sqlite3": "^5.1.7",
+    "styled-components": "^6.1.18",
     "tailwindcss": "^3.4.1"
   },
   "devDependencies": {
@@ -37,8 +43,9 @@
     "@types/react-dom": "^18.2.19",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.17",
+    "concurrently": "^9.1.2",
     "electron": "^28.2.3",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
@@ -47,6 +54,6 @@
     "postcss": "^8.4.35",
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3",
-    "vite": "^5.1.3"
+    "vite": "^5.4.19"
   }
-} 
+}
