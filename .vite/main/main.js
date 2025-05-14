@@ -1,15 +1,15 @@
 "use strict";
 const electron = require("electron");
-const path$1 = require("path");
+const require$$1$1 = require("path");
 const require$$1 = require("util");
 const stream = require("stream");
 const require$$3 = require("http");
-const require$$4 = require("https");
+const require$$4$1 = require("https");
 const require$$0$1 = require("url");
 const require$$6 = require("fs");
-const crypto = require("crypto");
-const require$$4$1 = require("assert");
-const require$$1$1 = require("tty");
+const crypto$1 = require("crypto");
+const require$$4$2 = require("assert");
+const require$$1$2 = require("tty");
 const require$$0$2 = require("os");
 const zlib = require("zlib");
 const events$1 = require("events");
@@ -381,7 +381,7 @@ const utils$1 = {
   asap,
   isIterable
 };
-function AxiosError$1(message, code, config, request, response) {
+function AxiosError$1(message, code, config2, request, response) {
   Error.call(this);
   if (Error.captureStackTrace) {
     Error.captureStackTrace(this, this.constructor);
@@ -391,7 +391,7 @@ function AxiosError$1(message, code, config, request, response) {
   this.message = message;
   this.name = "AxiosError";
   code && (this.code = code);
-  config && (this.config = config);
+  config2 && (this.config = config2);
   request && (this.request = request);
   if (response) {
     this.response = response;
@@ -440,14 +440,14 @@ const descriptors = {};
 });
 Object.defineProperties(AxiosError$1, descriptors);
 Object.defineProperty(prototype$1, "isAxiosError", { value: true });
-AxiosError$1.from = (error, code, config, request, response, customProps) => {
+AxiosError$1.from = (error, code, config2, request, response, customProps) => {
   const axiosError = Object.create(prototype$1);
   utils$1.toFlatObject(error, axiosError, function filter2(obj) {
     return obj !== Error.prototype;
   }, (prop) => {
     return prop !== "isAxiosError";
   });
-  AxiosError$1.call(axiosError, error.message, code, config, request, response);
+  AxiosError$1.call(axiosError, error.message, code, config2, request, response);
   axiosError.cause = error;
   axiosError.name = error.name;
   customProps && Object.assign(axiosError, customProps);
@@ -11422,7 +11422,7 @@ var mimeDb = require$$0;
  */
 (function(exports) {
   var db = mimeDb;
-  var extname = path$1.extname;
+  var extname = require$$1$1.extname;
   var EXTRACT_TYPE_REGEXP = /^\s*([^;\s]*)(?:;|\s|$)/;
   var TEXT_TYPE_REGEXP = /^text\//i;
   exports.charset = charset;
@@ -12348,7 +12348,7 @@ var esSetTostringtag = function setToStringTag(object, value) {
     }
   }
 };
-var populate$1 = function(dst, src2) {
+var populate$2 = function(dst, src2) {
   Object.keys(src2).forEach(function(prop) {
     dst[prop] = dst[prop] || src2[prop];
   });
@@ -12356,16 +12356,16 @@ var populate$1 = function(dst, src2) {
 };
 var CombinedStream = combined_stream;
 var util = require$$1;
-var path = path$1;
+var path$1 = require$$1$1;
 var http$1 = require$$3;
-var https$1 = require$$4;
+var https$1 = require$$4$1;
 var parseUrl$2 = require$$0$1.parse;
-var fs = require$$6;
+var fs$1 = require$$6;
 var Stream = stream.Stream;
 var mime = mimeTypes;
 var asynckit = asynckit$1;
 var setToStringTag2 = esSetTostringtag;
-var populate = populate$1;
+var populate$1 = populate$2;
 var form_data = FormData$1;
 util.inherits(FormData$1, CombinedStream);
 function FormData$1(options) {
@@ -12426,7 +12426,7 @@ FormData$1.prototype._lengthRetriever = function(value, callback) {
     if (value.end != void 0 && value.end != Infinity && value.start != void 0) {
       callback(null, value.end + 1 - (value.start ? value.start : 0));
     } else {
-      fs.stat(value.path, function(err, stat) {
+      fs$1.stat(value.path, function(err, stat) {
         var fileSize;
         if (err) {
           callback(err);
@@ -12462,7 +12462,7 @@ FormData$1.prototype._multiPartHeader = function(field, value, options) {
     "Content-Type": [].concat(contentType || [])
   };
   if (typeof options.header == "object") {
-    populate(headers, options.header);
+    populate$1(headers, options.header);
   }
   var header;
   for (var prop in headers) {
@@ -12484,11 +12484,11 @@ FormData$1.prototype._multiPartHeader = function(field, value, options) {
 FormData$1.prototype._getContentDisposition = function(value, options) {
   var filename, contentDisposition;
   if (typeof options.filepath === "string") {
-    filename = path.normalize(options.filepath).replace(/\\/g, "/");
+    filename = path$1.normalize(options.filepath).replace(/\\/g, "/");
   } else if (options.filename || value.name || value.path) {
-    filename = path.basename(options.filename || value.name || value.path);
+    filename = path$1.basename(options.filename || value.name || value.path);
   } else if (value.readable && Object.prototype.hasOwnProperty.call(value, "httpVersion")) {
-    filename = path.basename(value.client._httpMessage.path || "");
+    filename = path$1.basename(value.client._httpMessage.path || "");
   }
   if (filename) {
     contentDisposition = 'filename="' + filename + '"';
@@ -12613,14 +12613,14 @@ FormData$1.prototype.submit = function(params, cb) {
   var request, options, defaults2 = { method: "post" };
   if (typeof params == "string") {
     params = parseUrl$2(params);
-    options = populate({
+    options = populate$1({
       port: params.port,
       path: params.pathname,
       host: params.hostname,
       protocol: params.protocol
     }, defaults2);
   } else {
-    options = populate(params, defaults2);
+    options = populate$1(params, defaults2);
     if (!options.port) {
       options.port = options.protocol == "https:" ? 443 : 80;
     }
@@ -12912,7 +12912,7 @@ const generateString = (size = 16, alphabet = ALPHABET.ALPHA_DIGIT) => {
   let str = "";
   const { length } = alphabet;
   const randomValues = new Uint32Array(size);
-  crypto.randomFillSync(randomValues);
+  crypto$1.randomFillSync(randomValues);
   for (let i = 0; i < size; i++) {
     str += alphabet[randomValues[i] % length];
   }
@@ -13386,12 +13386,12 @@ utils$1.reduceDescriptors(AxiosHeaders$1.prototype, ({ value }, key) => {
 });
 utils$1.freezeMethods(AxiosHeaders$1);
 function transformData(fns, response) {
-  const config = this || defaults;
-  const context = response || config;
+  const config2 = this || defaults;
+  const context = response || config2;
   const headers = AxiosHeaders$1.from(context.headers);
   let data = context.data;
   utils$1.forEach(fns, function transform(fn) {
-    data = fn.call(config, data, headers.normalize(), response ? response.status : void 0);
+    data = fn.call(config2, data, headers.normalize(), response ? response.status : void 0);
   });
   headers.normalize();
   return data;
@@ -13399,8 +13399,8 @@ function transformData(fns, response) {
 function isCancel$1(value) {
   return !!(value && value.__CANCEL__);
 }
-function CanceledError$1(message, config, request) {
-  AxiosError$1.call(this, message == null ? "canceled" : message, AxiosError$1.ERR_CANCELED, config, request);
+function CanceledError$1(message, config2, request) {
+  AxiosError$1.call(this, message == null ? "canceled" : message, AxiosError$1.ERR_CANCELED, config2, request);
   this.name = "CanceledError";
 }
 utils$1.inherits(CanceledError$1, AxiosError$1, {
@@ -13515,7 +13515,7 @@ function requireMs() {
     options = options || {};
     var type2 = typeof val;
     if (type2 === "string" && val.length > 0) {
-      return parse(val);
+      return parse2(val);
     } else if (type2 === "number" && isFinite(val)) {
       return options.long ? fmtLong(val) : fmtShort(val);
     }
@@ -13523,7 +13523,7 @@ function requireMs() {
       "val is not a non-empty string or a valid number. val=" + JSON.stringify(val)
     );
   };
-  function parse(str) {
+  function parse2(str) {
     str = String(str);
     if (str.length > 100) {
       return;
@@ -13986,8 +13986,8 @@ var hasRequiredSupportsColor;
 function requireSupportsColor() {
   if (hasRequiredSupportsColor) return supportsColor_1;
   hasRequiredSupportsColor = 1;
-  const os = require$$0$2;
-  const tty = require$$1$1;
+  const os2 = require$$0$2;
+  const tty = require$$1$2;
   const hasFlag2 = requireHasFlag();
   const { env } = process;
   let forceColor;
@@ -14034,7 +14034,7 @@ function requireSupportsColor() {
       return min2;
     }
     if (process.platform === "win32") {
-      const osRelease = os.release().split(".");
+      const osRelease = os2.release().split(".");
       if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) {
         return Number(osRelease[2]) >= 14931 ? 3 : 2;
       }
@@ -14053,10 +14053,10 @@ function requireSupportsColor() {
       return 3;
     }
     if ("TERM_PROGRAM" in env) {
-      const version = parseInt((env.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+      const version2 = parseInt((env.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
       switch (env.TERM_PROGRAM) {
         case "iTerm.app":
-          return version >= 3 ? 3 : 2;
+          return version2 >= 3 ? 3 : 2;
         case "Apple_Terminal":
           return 2;
       }
@@ -14088,7 +14088,7 @@ function requireNode() {
   if (hasRequiredNode) return node.exports;
   hasRequiredNode = 1;
   (function(module, exports) {
-    const tty = require$$1$1;
+    const tty = require$$1$2;
     const util2 = require$$1;
     exports.init = init;
     exports.log = log;
@@ -14287,9 +14287,9 @@ var debug_1 = function() {
 var url = require$$0$1;
 var URL$1 = url.URL;
 var http = require$$3;
-var https = require$$4;
+var https = require$$4$1;
 var Writable = stream.Writable;
-var assert = require$$4$1;
+var assert = require$$4$2;
 var debug = debug_1;
 (function detectUnsupportedEnvironment() {
   var looksLikeNode = typeof process !== "undefined";
@@ -15225,11 +15225,11 @@ const resolveFamily = ({ address, family }) => {
   };
 };
 const buildAddressEntry = (address, family) => resolveFamily(utils$1.isObject(address) ? address : { address, family });
-const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
+const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config2) {
   return wrapAsync(async function dispatchHttpRequest(resolve, reject, onDone) {
-    let { data, lookup, family } = config;
-    const { responseType, responseEncoding } = config;
-    const method = config.method.toUpperCase();
+    let { data, lookup, family } = config2;
+    const { responseType, responseEncoding } = config2;
+    const method = config2.method.toUpperCase();
     let isDone;
     let rejected = false;
     let req;
@@ -15247,11 +15247,11 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
     }
     const emitter = new events$1.EventEmitter();
     const onFinished = () => {
-      if (config.cancelToken) {
-        config.cancelToken.unsubscribe(abort2);
+      if (config2.cancelToken) {
+        config2.cancelToken.unsubscribe(abort2);
       }
-      if (config.signal) {
-        config.signal.removeEventListener("abort", abort2);
+      if (config2.signal) {
+        config2.signal.removeEventListener("abort", abort2);
       }
       emitter.removeAllListeners();
     };
@@ -15263,16 +15263,16 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
       }
     });
     function abort2(reason) {
-      emitter.emit("abort", !reason || reason.type ? new CanceledError$1(null, config, req) : reason);
+      emitter.emit("abort", !reason || reason.type ? new CanceledError$1(null, config2, req) : reason);
     }
     emitter.once("abort", reject);
-    if (config.cancelToken || config.signal) {
-      config.cancelToken && config.cancelToken.subscribe(abort2);
-      if (config.signal) {
-        config.signal.aborted ? abort2() : config.signal.addEventListener("abort", abort2);
+    if (config2.cancelToken || config2.signal) {
+      config2.cancelToken && config2.cancelToken.subscribe(abort2);
+      if (config2.signal) {
+        config2.signal.aborted ? abort2() : config2.signal.addEventListener("abort", abort2);
       }
     }
-    const fullPath = buildFullPath(config.baseURL, config.url, config.allowAbsoluteUrls);
+    const fullPath = buildFullPath(config2.baseURL, config2.url, config2.allowAbsoluteUrls);
     const parsed = new URL(fullPath, platform.hasBrowserEnv ? platform.origin : void 0);
     const protocol = parsed.protocol || supportedProtocols[0];
     if (protocol === "data:") {
@@ -15282,15 +15282,15 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
           status: 405,
           statusText: "method not allowed",
           headers: {},
-          config
+          config: config2
         });
       }
       try {
-        convertedData = fromDataURI(config.url, responseType === "blob", {
-          Blob: config.env && config.env.Blob
+        convertedData = fromDataURI(config2.url, responseType === "blob", {
+          Blob: config2.env && config2.env.Blob
         });
       } catch (err) {
-        throw AxiosError$1.from(err, AxiosError$1.ERR_BAD_REQUEST, config);
+        throw AxiosError$1.from(err, AxiosError$1.ERR_BAD_REQUEST, config2);
       }
       if (responseType === "text") {
         convertedData = convertedData.toString(responseEncoding);
@@ -15305,20 +15305,20 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
         status: 200,
         statusText: "OK",
         headers: new AxiosHeaders$1(),
-        config
+        config: config2
       });
     }
     if (supportedProtocols.indexOf(protocol) === -1) {
       return reject(new AxiosError$1(
         "Unsupported protocol " + protocol,
         AxiosError$1.ERR_BAD_REQUEST,
-        config
+        config2
       ));
     }
-    const headers = AxiosHeaders$1.from(config.headers).normalize();
+    const headers = AxiosHeaders$1.from(config2.headers).normalize();
     headers.set("User-Agent", "axios/" + VERSION$1, false);
-    const { onUploadProgress, onDownloadProgress } = config;
-    const maxRate = config.maxRate;
+    const { onUploadProgress, onDownloadProgress } = config2;
+    const maxRate = config2.maxRate;
     let maxUploadRate = void 0;
     let maxDownloadRate = void 0;
     if (utils$1.isSpecCompliantForm(data)) {
@@ -15352,15 +15352,15 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
         return reject(new AxiosError$1(
           "Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream",
           AxiosError$1.ERR_BAD_REQUEST,
-          config
+          config2
         ));
       }
       headers.setContentLength(data.length, false);
-      if (config.maxBodyLength > -1 && data.length > config.maxBodyLength) {
+      if (config2.maxBodyLength > -1 && data.length > config2.maxBodyLength) {
         return reject(new AxiosError$1(
           "Request body larger than maxBodyLength limit",
           AxiosError$1.ERR_BAD_REQUEST,
-          config
+          config2
         ));
       }
     }
@@ -15387,9 +15387,9 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
       ));
     }
     let auth = void 0;
-    if (config.auth) {
-      const username = config.auth.username || "";
-      const password = config.auth.password || "";
+    if (config2.auth) {
+      const username = config2.auth.username || "";
+      const password = config2.auth.password || "";
       auth = username + ":" + password;
     }
     if (!auth && parsed.username) {
@@ -15402,13 +15402,13 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
     try {
       path2 = buildURL(
         parsed.pathname + parsed.search,
-        config.params,
-        config.paramsSerializer
+        config2.params,
+        config2.paramsSerializer
       ).replace(/^\?/, "");
     } catch (err) {
       const customErr = new Error(err.message);
-      customErr.config = config;
-      customErr.url = config.url;
+      customErr.config = config2;
+      customErr.url = config2.url;
       customErr.exists = true;
       return reject(customErr);
     }
@@ -15421,7 +15421,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
       path: path2,
       method,
       headers: headers.toJSON(),
-      agents: { http: config.httpAgent, https: config.httpsAgent },
+      agents: { http: config2.httpAgent, https: config2.httpsAgent },
       auth,
       protocol,
       family,
@@ -15429,36 +15429,36 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
       beforeRedirects: {}
     };
     !utils$1.isUndefined(lookup) && (options.lookup = lookup);
-    if (config.socketPath) {
-      options.socketPath = config.socketPath;
+    if (config2.socketPath) {
+      options.socketPath = config2.socketPath;
     } else {
       options.hostname = parsed.hostname.startsWith("[") ? parsed.hostname.slice(1, -1) : parsed.hostname;
       options.port = parsed.port;
-      setProxy(options, config.proxy, protocol + "//" + parsed.hostname + (parsed.port ? ":" + parsed.port : "") + options.path);
+      setProxy(options, config2.proxy, protocol + "//" + parsed.hostname + (parsed.port ? ":" + parsed.port : "") + options.path);
     }
     let transport;
     const isHttpsRequest = isHttps.test(options.protocol);
-    options.agent = isHttpsRequest ? config.httpsAgent : config.httpAgent;
-    if (config.transport) {
-      transport = config.transport;
-    } else if (config.maxRedirects === 0) {
-      transport = isHttpsRequest ? require$$4 : require$$3;
+    options.agent = isHttpsRequest ? config2.httpsAgent : config2.httpAgent;
+    if (config2.transport) {
+      transport = config2.transport;
+    } else if (config2.maxRedirects === 0) {
+      transport = isHttpsRequest ? require$$4$1 : require$$3;
     } else {
-      if (config.maxRedirects) {
-        options.maxRedirects = config.maxRedirects;
+      if (config2.maxRedirects) {
+        options.maxRedirects = config2.maxRedirects;
       }
-      if (config.beforeRedirect) {
-        options.beforeRedirects.config = config.beforeRedirect;
+      if (config2.beforeRedirect) {
+        options.beforeRedirects.config = config2.beforeRedirect;
       }
       transport = isHttpsRequest ? httpsFollow : httpFollow;
     }
-    if (config.maxBodyLength > -1) {
-      options.maxBodyLength = config.maxBodyLength;
+    if (config2.maxBodyLength > -1) {
+      options.maxBodyLength = config2.maxBodyLength;
     } else {
       options.maxBodyLength = Infinity;
     }
-    if (config.insecureHTTPParser) {
-      options.insecureHTTPParser = config.insecureHTTPParser;
+    if (config2.insecureHTTPParser) {
+      options.insecureHTTPParser = config2.insecureHTTPParser;
     }
     req = transport.request(options, function handleResponse(res) {
       if (req.destroyed) return;
@@ -15479,7 +15479,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
       }
       let responseStream = res;
       const lastRequest = res.req || req;
-      if (config.decompress !== false && res.headers["content-encoding"]) {
+      if (config2.decompress !== false && res.headers["content-encoding"]) {
         if (method === "HEAD" || res.statusCode === 204) {
           delete res.headers["content-encoding"];
         }
@@ -15512,7 +15512,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
         status: res.statusCode,
         statusText: res.statusMessage,
         headers: new AxiosHeaders$1(res.headers),
-        config,
+        config: config2,
         request: lastRequest
       };
       if (responseType === "stream") {
@@ -15524,13 +15524,13 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
         responseStream.on("data", function handleStreamData(chunk) {
           responseBuffer.push(chunk);
           totalResponseBytes += chunk.length;
-          if (config.maxContentLength > -1 && totalResponseBytes > config.maxContentLength) {
+          if (config2.maxContentLength > -1 && totalResponseBytes > config2.maxContentLength) {
             rejected = true;
             responseStream.destroy();
             reject(new AxiosError$1(
-              "maxContentLength size of " + config.maxContentLength + " exceeded",
+              "maxContentLength size of " + config2.maxContentLength + " exceeded",
               AxiosError$1.ERR_BAD_RESPONSE,
-              config,
+              config2,
               lastRequest
             ));
           }
@@ -15542,7 +15542,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
           const err = new AxiosError$1(
             "stream has been aborted",
             AxiosError$1.ERR_BAD_RESPONSE,
-            config,
+            config2,
             lastRequest
           );
           responseStream.destroy(err);
@@ -15550,7 +15550,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
         });
         responseStream.on("error", function handleStreamError(err) {
           if (req.destroyed) return;
-          reject(AxiosError$1.from(err, null, config, lastRequest));
+          reject(AxiosError$1.from(err, null, config2, lastRequest));
         });
         responseStream.on("end", function handleStreamEnd() {
           try {
@@ -15563,7 +15563,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
             }
             response.data = responseData;
           } catch (err) {
-            return reject(AxiosError$1.from(err, null, config, response.request, response));
+            return reject(AxiosError$1.from(err, null, config2, response.request, response));
           }
           settle(resolve, reject, response);
         });
@@ -15580,33 +15580,33 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
       req.destroy(err);
     });
     req.on("error", function handleRequestError(err) {
-      reject(AxiosError$1.from(err, null, config, req));
+      reject(AxiosError$1.from(err, null, config2, req));
     });
     req.on("socket", function handleRequestSocket(socket) {
       socket.setKeepAlive(true, 1e3 * 60);
     });
-    if (config.timeout) {
-      const timeout = parseInt(config.timeout, 10);
+    if (config2.timeout) {
+      const timeout = parseInt(config2.timeout, 10);
       if (Number.isNaN(timeout)) {
         reject(new AxiosError$1(
           "error trying to parse `config.timeout` to int",
           AxiosError$1.ERR_BAD_OPTION_VALUE,
-          config,
+          config2,
           req
         ));
         return;
       }
       req.setTimeout(timeout, function handleRequestTimeout() {
         if (isDone) return;
-        let timeoutErrorMessage = config.timeout ? "timeout of " + config.timeout + "ms exceeded" : "timeout exceeded";
-        const transitional2 = config.transitional || transitionalDefaults;
-        if (config.timeoutErrorMessage) {
-          timeoutErrorMessage = config.timeoutErrorMessage;
+        let timeoutErrorMessage = config2.timeout ? "timeout of " + config2.timeout + "ms exceeded" : "timeout exceeded";
+        const transitional2 = config2.transitional || transitionalDefaults;
+        if (config2.timeoutErrorMessage) {
+          timeoutErrorMessage = config2.timeoutErrorMessage;
         }
         reject(new AxiosError$1(
           timeoutErrorMessage,
           transitional2.clarifyTimeoutError ? AxiosError$1.ETIMEDOUT : AxiosError$1.ECONNABORTED,
-          config,
+          config2,
           req
         ));
         abort2();
@@ -15624,7 +15624,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config) {
       });
       data.on("close", () => {
         if (!ended && !errored) {
-          abort2(new CanceledError$1("Request stream has been aborted", config, req));
+          abort2(new CanceledError$1("Request stream has been aborted", config2, req));
         }
       });
       data.pipe(req);
@@ -15674,7 +15674,7 @@ const cookies = platform.hasStandardBrowserEnv ? (
 const headersToObject = (thing) => thing instanceof AxiosHeaders$1 ? { ...thing } : thing;
 function mergeConfig$1(config1, config2) {
   config2 = config2 || {};
-  const config = {};
+  const config3 = {};
   function getMergedValue(target, source, prop, caseless) {
     if (utils$1.isPlainObject(target) && utils$1.isPlainObject(source)) {
       return utils$1.merge.call({ caseless }, target, source);
@@ -15745,15 +15745,15 @@ function mergeConfig$1(config1, config2) {
   utils$1.forEach(Object.keys(Object.assign({}, config1, config2)), function computeConfigValue(prop) {
     const merge2 = mergeMap[prop] || mergeDeepProperties;
     const configValue = merge2(config1[prop], config2[prop], prop);
-    utils$1.isUndefined(configValue) && merge2 !== mergeDirectKeys || (config[prop] = configValue);
+    utils$1.isUndefined(configValue) && merge2 !== mergeDirectKeys || (config3[prop] = configValue);
   });
-  return config;
+  return config3;
 }
-const resolveConfig = (config) => {
-  const newConfig = mergeConfig$1({}, config);
+const resolveConfig = (config2) => {
+  const newConfig = mergeConfig$1({}, config2);
   let { data, withXSRFToken, xsrfHeaderName, xsrfCookieName, headers, auth } = newConfig;
   newConfig.headers = headers = AxiosHeaders$1.from(headers);
-  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url, newConfig.allowAbsoluteUrls), config.params, config.paramsSerializer);
+  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url, newConfig.allowAbsoluteUrls), config2.params, config2.paramsSerializer);
   if (auth) {
     headers.set(
       "Authorization",
@@ -15781,9 +15781,9 @@ const resolveConfig = (config) => {
   return newConfig;
 };
 const isXHRAdapterSupported = typeof XMLHttpRequest !== "undefined";
-const xhrAdapter = isXHRAdapterSupported && function(config) {
+const xhrAdapter = isXHRAdapterSupported && function(config2) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
-    const _config = resolveConfig(config);
+    const _config = resolveConfig(config2);
     let requestData = _config.data;
     const requestHeaders = AxiosHeaders$1.from(_config.headers).normalize();
     let { responseType, onUploadProgress, onDownloadProgress } = _config;
@@ -15812,7 +15812,7 @@ const xhrAdapter = isXHRAdapterSupported && function(config) {
         status: request.status,
         statusText: request.statusText,
         headers: responseHeaders,
-        config,
+        config: config2,
         request
       };
       settle(function _resolve(value) {
@@ -15841,11 +15841,11 @@ const xhrAdapter = isXHRAdapterSupported && function(config) {
       if (!request) {
         return;
       }
-      reject(new AxiosError$1("Request aborted", AxiosError$1.ECONNABORTED, config, request));
+      reject(new AxiosError$1("Request aborted", AxiosError$1.ECONNABORTED, config2, request));
       request = null;
     };
     request.onerror = function handleError() {
-      reject(new AxiosError$1("Network Error", AxiosError$1.ERR_NETWORK, config, request));
+      reject(new AxiosError$1("Network Error", AxiosError$1.ERR_NETWORK, config2, request));
       request = null;
     };
     request.ontimeout = function handleTimeout() {
@@ -15857,7 +15857,7 @@ const xhrAdapter = isXHRAdapterSupported && function(config) {
       reject(new AxiosError$1(
         timeoutErrorMessage,
         transitional2.clarifyTimeoutError ? AxiosError$1.ETIMEDOUT : AxiosError$1.ECONNABORTED,
-        config,
+        config2,
         request
       ));
       request = null;
@@ -15888,7 +15888,7 @@ const xhrAdapter = isXHRAdapterSupported && function(config) {
         if (!request) {
           return;
         }
-        reject(!cancel || cancel.type ? new CanceledError$1(null, config, request) : cancel);
+        reject(!cancel || cancel.type ? new CanceledError$1(null, config2, request) : cancel);
         request.abort();
         request = null;
       };
@@ -15899,7 +15899,7 @@ const xhrAdapter = isXHRAdapterSupported && function(config) {
     }
     const protocol = parseProtocol(_config.url);
     if (protocol && platform.protocols.indexOf(protocol) === -1) {
-      reject(new AxiosError$1("Unsupported protocol " + protocol + ":", AxiosError$1.ERR_BAD_REQUEST, config));
+      reject(new AxiosError$1("Unsupported protocol " + protocol + ":", AxiosError$1.ERR_BAD_REQUEST, config2));
       return;
     }
     request.send(requestData || null);
@@ -16042,8 +16042,8 @@ const resolvers = {
 };
 isFetchSupported && ((res) => {
   ["text", "arrayBuffer", "blob", "formData", "stream"].forEach((type2) => {
-    !resolvers[type2] && (resolvers[type2] = utils$1.isFunction(res[type2]) ? (res2) => res2[type2]() : (_, config) => {
-      throw new AxiosError$1(`Response type '${type2}' is not supported`, AxiosError$1.ERR_NOT_SUPPORT, config);
+    !resolvers[type2] && (resolvers[type2] = utils$1.isFunction(res[type2]) ? (res2) => res2[type2]() : (_, config2) => {
+      throw new AxiosError$1(`Response type '${type2}' is not supported`, AxiosError$1.ERR_NOT_SUPPORT, config2);
     });
   });
 })(new Response());
@@ -16075,7 +16075,7 @@ const resolveBodyLength = async (headers, body) => {
   const length = utils$1.toFiniteNumber(headers.getContentLength());
   return length == null ? getBodyLength(body) : length;
 };
-const fetchAdapter = isFetchSupported && (async (config) => {
+const fetchAdapter = isFetchSupported && (async (config2) => {
   let {
     url: url2,
     method,
@@ -16089,7 +16089,7 @@ const fetchAdapter = isFetchSupported && (async (config) => {
     headers,
     withCredentials = "same-origin",
     fetchOptions
-  } = resolveConfig(config);
+  } = resolveConfig(config2);
   responseType = responseType ? (responseType + "").toLowerCase() : "text";
   let composedSignal = composeSignals([signal, cancelToken && cancelToken.toAbortSignal()], timeout);
   let request;
@@ -16150,7 +16150,7 @@ const fetchAdapter = isFetchSupported && (async (config) => {
       );
     }
     responseType = responseType || "text";
-    let responseData = await resolvers[utils$1.findKey(resolvers, responseType) || "text"](response, config);
+    let responseData = await resolvers[utils$1.findKey(resolvers, responseType) || "text"](response, config2);
     !isStreamResponse && unsubscribe && unsubscribe();
     return await new Promise((resolve, reject) => {
       settle(resolve, reject, {
@@ -16158,7 +16158,7 @@ const fetchAdapter = isFetchSupported && (async (config) => {
         headers: AxiosHeaders$1.from(response.headers),
         status: response.status,
         statusText: response.statusText,
-        config,
+        config: config2,
         request
       });
     });
@@ -16166,13 +16166,13 @@ const fetchAdapter = isFetchSupported && (async (config) => {
     unsubscribe && unsubscribe();
     if (err && err.name === "TypeError" && /Load failed|fetch/i.test(err.message)) {
       throw Object.assign(
-        new AxiosError$1("Network Error", AxiosError$1.ERR_NETWORK, config, request),
+        new AxiosError$1("Network Error", AxiosError$1.ERR_NETWORK, config2, request),
         {
           cause: err.cause || err
         }
       );
     }
-    throw AxiosError$1.from(err, err && err.code, config, request);
+    throw AxiosError$1.from(err, err && err.code, config2, request);
   }
 });
 const knownAdapters = {
@@ -16227,41 +16227,41 @@ const adapters = {
   },
   adapters: knownAdapters
 };
-function throwIfCancellationRequested(config) {
-  if (config.cancelToken) {
-    config.cancelToken.throwIfRequested();
+function throwIfCancellationRequested(config2) {
+  if (config2.cancelToken) {
+    config2.cancelToken.throwIfRequested();
   }
-  if (config.signal && config.signal.aborted) {
-    throw new CanceledError$1(null, config);
+  if (config2.signal && config2.signal.aborted) {
+    throw new CanceledError$1(null, config2);
   }
 }
-function dispatchRequest(config) {
-  throwIfCancellationRequested(config);
-  config.headers = AxiosHeaders$1.from(config.headers);
-  config.data = transformData.call(
-    config,
-    config.transformRequest
+function dispatchRequest(config2) {
+  throwIfCancellationRequested(config2);
+  config2.headers = AxiosHeaders$1.from(config2.headers);
+  config2.data = transformData.call(
+    config2,
+    config2.transformRequest
   );
-  if (["post", "put", "patch"].indexOf(config.method) !== -1) {
-    config.headers.setContentType("application/x-www-form-urlencoded", false);
+  if (["post", "put", "patch"].indexOf(config2.method) !== -1) {
+    config2.headers.setContentType("application/x-www-form-urlencoded", false);
   }
-  const adapter = adapters.getAdapter(config.adapter || defaults.adapter);
-  return adapter(config).then(function onAdapterResolution(response) {
-    throwIfCancellationRequested(config);
+  const adapter = adapters.getAdapter(config2.adapter || defaults.adapter);
+  return adapter(config2).then(function onAdapterResolution(response) {
+    throwIfCancellationRequested(config2);
     response.data = transformData.call(
-      config,
-      config.transformResponse,
+      config2,
+      config2.transformResponse,
       response
     );
     response.headers = AxiosHeaders$1.from(response.headers);
     return response;
   }, function onAdapterRejection(reason) {
     if (!isCancel$1(reason)) {
-      throwIfCancellationRequested(config);
+      throwIfCancellationRequested(config2);
       if (reason && reason.response) {
         reason.response.data = transformData.call(
-          config,
-          config.transformResponse,
+          config2,
+          config2.transformResponse,
           reason.response
         );
         reason.response.headers = AxiosHeaders$1.from(reason.response.headers);
@@ -16277,23 +16277,23 @@ const validators$1 = {};
   };
 });
 const deprecatedWarnings = {};
-validators$1.transitional = function transitional(validator2, version, message) {
+validators$1.transitional = function transitional(validator2, version2, message) {
   function formatMessage(opt, desc) {
     return "[Axios v" + VERSION$1 + "] Transitional option '" + opt + "'" + desc + (message ? ". " + message : "");
   }
   return (value, opt, opts) => {
     if (validator2 === false) {
       throw new AxiosError$1(
-        formatMessage(opt, " has been removed" + (version ? " in " + version : "")),
+        formatMessage(opt, " has been removed" + (version2 ? " in " + version2 : "")),
         AxiosError$1.ERR_DEPRECATED
       );
     }
-    if (version && !deprecatedWarnings[opt]) {
+    if (version2 && !deprecatedWarnings[opt]) {
       deprecatedWarnings[opt] = true;
       console.warn(
         formatMessage(
           opt,
-          " has been deprecated since v" + version + " and will be removed in the near future"
+          " has been deprecated since v" + version2 + " and will be removed in the near future"
         )
       );
     }
@@ -16349,9 +16349,9 @@ let Axios$1 = class Axios {
    *
    * @returns {Promise} The Promise to be fulfilled
    */
-  async request(configOrUrl, config) {
+  async request(configOrUrl, config2) {
     try {
-      return await this._request(configOrUrl, config);
+      return await this._request(configOrUrl, config2);
     } catch (err) {
       if (err instanceof Error) {
         let dummy = {};
@@ -16369,15 +16369,15 @@ let Axios$1 = class Axios {
       throw err;
     }
   }
-  _request(configOrUrl, config) {
+  _request(configOrUrl, config2) {
     if (typeof configOrUrl === "string") {
-      config = config || {};
-      config.url = configOrUrl;
+      config2 = config2 || {};
+      config2.url = configOrUrl;
     } else {
-      config = configOrUrl || {};
+      config2 = configOrUrl || {};
     }
-    config = mergeConfig$1(this.defaults, config);
-    const { transitional: transitional2, paramsSerializer, headers } = config;
+    config2 = mergeConfig$1(this.defaults, config2);
+    const { transitional: transitional2, paramsSerializer, headers } = config2;
     if (transitional2 !== void 0) {
       validator.assertOptions(transitional2, {
         silentJSONParsing: validators.transitional(validators.boolean),
@@ -16387,7 +16387,7 @@ let Axios$1 = class Axios {
     }
     if (paramsSerializer != null) {
       if (utils$1.isFunction(paramsSerializer)) {
-        config.paramsSerializer = {
+        config2.paramsSerializer = {
           serialize: paramsSerializer
         };
       } else {
@@ -16397,20 +16397,20 @@ let Axios$1 = class Axios {
         }, true);
       }
     }
-    if (config.allowAbsoluteUrls !== void 0) ;
+    if (config2.allowAbsoluteUrls !== void 0) ;
     else if (this.defaults.allowAbsoluteUrls !== void 0) {
-      config.allowAbsoluteUrls = this.defaults.allowAbsoluteUrls;
+      config2.allowAbsoluteUrls = this.defaults.allowAbsoluteUrls;
     } else {
-      config.allowAbsoluteUrls = true;
+      config2.allowAbsoluteUrls = true;
     }
-    validator.assertOptions(config, {
+    validator.assertOptions(config2, {
       baseUrl: validators.spelling("baseURL"),
       withXsrfToken: validators.spelling("withXSRFToken")
     }, true);
-    config.method = (config.method || this.defaults.method || "get").toLowerCase();
+    config2.method = (config2.method || this.defaults.method || "get").toLowerCase();
     let contextHeaders = headers && utils$1.merge(
       headers.common,
-      headers[config.method]
+      headers[config2.method]
     );
     headers && utils$1.forEach(
       ["delete", "get", "head", "post", "put", "patch", "common"],
@@ -16418,11 +16418,11 @@ let Axios$1 = class Axios {
         delete headers[method];
       }
     );
-    config.headers = AxiosHeaders$1.concat(contextHeaders, headers);
+    config2.headers = AxiosHeaders$1.concat(contextHeaders, headers);
     const requestInterceptorChain = [];
     let synchronousRequestInterceptors = true;
     this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
-      if (typeof interceptor.runWhen === "function" && interceptor.runWhen(config) === false) {
+      if (typeof interceptor.runWhen === "function" && interceptor.runWhen(config2) === false) {
         return;
       }
       synchronousRequestInterceptors = synchronousRequestInterceptors && interceptor.synchronous;
@@ -16440,14 +16440,14 @@ let Axios$1 = class Axios {
       chain.unshift.apply(chain, requestInterceptorChain);
       chain.push.apply(chain, responseInterceptorChain);
       len = chain.length;
-      promise = Promise.resolve(config);
+      promise = Promise.resolve(config2);
       while (i < len) {
         promise = promise.then(chain[i++], chain[i++]);
       }
       return promise;
     }
     len = requestInterceptorChain.length;
-    let newConfig = config;
+    let newConfig = config2;
     i = 0;
     while (i < len) {
       const onFulfilled = requestInterceptorChain[i++];
@@ -16471,25 +16471,25 @@ let Axios$1 = class Axios {
     }
     return promise;
   }
-  getUri(config) {
-    config = mergeConfig$1(this.defaults, config);
-    const fullPath = buildFullPath(config.baseURL, config.url, config.allowAbsoluteUrls);
-    return buildURL(fullPath, config.params, config.paramsSerializer);
+  getUri(config2) {
+    config2 = mergeConfig$1(this.defaults, config2);
+    const fullPath = buildFullPath(config2.baseURL, config2.url, config2.allowAbsoluteUrls);
+    return buildURL(fullPath, config2.params, config2.paramsSerializer);
   }
 };
 utils$1.forEach(["delete", "get", "head", "options"], function forEachMethodNoData(method) {
-  Axios$1.prototype[method] = function(url2, config) {
-    return this.request(mergeConfig$1(config || {}, {
+  Axios$1.prototype[method] = function(url2, config2) {
+    return this.request(mergeConfig$1(config2 || {}, {
       method,
       url: url2,
-      data: (config || {}).data
+      data: (config2 || {}).data
     }));
   };
 });
 utils$1.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
   function generateHTTPMethod(isForm) {
-    return function httpMethod(url2, data, config) {
-      return this.request(mergeConfig$1(config || {}, {
+    return function httpMethod(url2, data, config2) {
+      return this.request(mergeConfig$1(config2 || {}, {
         method,
         headers: isForm ? {
           "Content-Type": "multipart/form-data"
@@ -16531,11 +16531,11 @@ let CancelToken$1 = class CancelToken {
       };
       return promise;
     };
-    executor(function cancel(message, config, request) {
+    executor(function cancel(message, config2, request) {
       if (token.reason) {
         return;
       }
-      token.reason = new CanceledError$1(message, config, request);
+      token.reason = new CanceledError$1(message, config2, request);
       resolvePromise(token.reason);
     });
   }
@@ -16721,10 +16721,285 @@ const {
   getAdapter,
   mergeConfig
 } = axios;
+var main = { exports: {} };
+const version$1 = "16.5.0";
+const require$$4 = {
+  version: version$1
+};
+const fs = require$$6;
+const path = require$$1$1;
+const os = require$$0$2;
+const crypto = crypto$1;
+const packageJson = require$$4;
+const version = packageJson.version;
+const LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
+function parse(src2) {
+  const obj = {};
+  let lines = src2.toString();
+  lines = lines.replace(/\r\n?/mg, "\n");
+  let match;
+  while ((match = LINE.exec(lines)) != null) {
+    const key = match[1];
+    let value = match[2] || "";
+    value = value.trim();
+    const maybeQuote = value[0];
+    value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
+    if (maybeQuote === '"') {
+      value = value.replace(/\\n/g, "\n");
+      value = value.replace(/\\r/g, "\r");
+    }
+    obj[key] = value;
+  }
+  return obj;
+}
+function _parseVault(options) {
+  const vaultPath = _vaultPath(options);
+  const result = DotenvModule.configDotenv({ path: vaultPath });
+  if (!result.parsed) {
+    const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
+    err.code = "MISSING_DATA";
+    throw err;
+  }
+  const keys = _dotenvKey(options).split(",");
+  const length = keys.length;
+  let decrypted;
+  for (let i = 0; i < length; i++) {
+    try {
+      const key = keys[i].trim();
+      const attrs = _instructions(result, key);
+      decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
+      break;
+    } catch (error) {
+      if (i + 1 >= length) {
+        throw error;
+      }
+    }
+  }
+  return DotenvModule.parse(decrypted);
+}
+function _warn(message) {
+  console.log(`[dotenv@${version}][WARN] ${message}`);
+}
+function _debug(message) {
+  console.log(`[dotenv@${version}][DEBUG] ${message}`);
+}
+function _dotenvKey(options) {
+  if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
+    return options.DOTENV_KEY;
+  }
+  if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
+    return process.env.DOTENV_KEY;
+  }
+  return "";
+}
+function _instructions(result, dotenvKey) {
+  let uri2;
+  try {
+    uri2 = new URL(dotenvKey);
+  } catch (error) {
+    if (error.code === "ERR_INVALID_URL") {
+      const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
+      err.code = "INVALID_DOTENV_KEY";
+      throw err;
+    }
+    throw error;
+  }
+  const key = uri2.password;
+  if (!key) {
+    const err = new Error("INVALID_DOTENV_KEY: Missing key part");
+    err.code = "INVALID_DOTENV_KEY";
+    throw err;
+  }
+  const environment = uri2.searchParams.get("environment");
+  if (!environment) {
+    const err = new Error("INVALID_DOTENV_KEY: Missing environment part");
+    err.code = "INVALID_DOTENV_KEY";
+    throw err;
+  }
+  const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
+  const ciphertext = result.parsed[environmentKey];
+  if (!ciphertext) {
+    const err = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
+    err.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
+    throw err;
+  }
+  return { ciphertext, key };
+}
+function _vaultPath(options) {
+  let possibleVaultPath = null;
+  if (options && options.path && options.path.length > 0) {
+    if (Array.isArray(options.path)) {
+      for (const filepath of options.path) {
+        if (fs.existsSync(filepath)) {
+          possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
+        }
+      }
+    } else {
+      possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
+    }
+  } else {
+    possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
+  }
+  if (fs.existsSync(possibleVaultPath)) {
+    return possibleVaultPath;
+  }
+  return null;
+}
+function _resolveHome(envPath) {
+  return envPath[0] === "~" ? path.join(os.homedir(), envPath.slice(1)) : envPath;
+}
+function _configVault(options) {
+  const debug2 = Boolean(options && options.debug);
+  if (debug2) {
+    _debug("Loading env from encrypted .env.vault");
+  }
+  const parsed = DotenvModule._parseVault(options);
+  let processEnv = process.env;
+  if (options && options.processEnv != null) {
+    processEnv = options.processEnv;
+  }
+  DotenvModule.populate(processEnv, parsed, options);
+  return { parsed };
+}
+function configDotenv(options) {
+  const dotenvPath = path.resolve(process.cwd(), ".env");
+  let encoding = "utf8";
+  const debug2 = Boolean(options && options.debug);
+  if (options && options.encoding) {
+    encoding = options.encoding;
+  } else {
+    if (debug2) {
+      _debug("No encoding is specified. UTF-8 is used by default");
+    }
+  }
+  let optionPaths = [dotenvPath];
+  if (options && options.path) {
+    if (!Array.isArray(options.path)) {
+      optionPaths = [_resolveHome(options.path)];
+    } else {
+      optionPaths = [];
+      for (const filepath of options.path) {
+        optionPaths.push(_resolveHome(filepath));
+      }
+    }
+  }
+  let lastError;
+  const parsedAll = {};
+  for (const path2 of optionPaths) {
+    try {
+      const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
+      DotenvModule.populate(parsedAll, parsed, options);
+    } catch (e) {
+      if (debug2) {
+        _debug(`Failed to load ${path2} ${e.message}`);
+      }
+      lastError = e;
+    }
+  }
+  let processEnv = process.env;
+  if (options && options.processEnv != null) {
+    processEnv = options.processEnv;
+  }
+  DotenvModule.populate(processEnv, parsedAll, options);
+  if (lastError) {
+    return { parsed: parsedAll, error: lastError };
+  } else {
+    return { parsed: parsedAll };
+  }
+}
+function config(options) {
+  if (_dotenvKey(options).length === 0) {
+    return DotenvModule.configDotenv(options);
+  }
+  const vaultPath = _vaultPath(options);
+  if (!vaultPath) {
+    _warn(`You set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}. Did you forget to build it?`);
+    return DotenvModule.configDotenv(options);
+  }
+  return DotenvModule._configVault(options);
+}
+function decrypt(encrypted, keyStr) {
+  const key = Buffer.from(keyStr.slice(-64), "hex");
+  let ciphertext = Buffer.from(encrypted, "base64");
+  const nonce = ciphertext.subarray(0, 12);
+  const authTag = ciphertext.subarray(-16);
+  ciphertext = ciphertext.subarray(12, -16);
+  try {
+    const aesgcm = crypto.createDecipheriv("aes-256-gcm", key, nonce);
+    aesgcm.setAuthTag(authTag);
+    return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
+  } catch (error) {
+    const isRange = error instanceof RangeError;
+    const invalidKeyLength = error.message === "Invalid key length";
+    const decryptionFailed = error.message === "Unsupported state or unable to authenticate data";
+    if (isRange || invalidKeyLength) {
+      const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
+      err.code = "INVALID_DOTENV_KEY";
+      throw err;
+    } else if (decryptionFailed) {
+      const err = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
+      err.code = "DECRYPTION_FAILED";
+      throw err;
+    } else {
+      throw error;
+    }
+  }
+}
+function populate(processEnv, parsed, options = {}) {
+  const debug2 = Boolean(options && options.debug);
+  const override = Boolean(options && options.override);
+  if (typeof parsed !== "object") {
+    const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
+    err.code = "OBJECT_REQUIRED";
+    throw err;
+  }
+  for (const key of Object.keys(parsed)) {
+    if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
+      if (override === true) {
+        processEnv[key] = parsed[key];
+      }
+      if (debug2) {
+        if (override === true) {
+          _debug(`"${key}" is already defined and WAS overwritten`);
+        } else {
+          _debug(`"${key}" is already defined and was NOT overwritten`);
+        }
+      }
+    } else {
+      processEnv[key] = parsed[key];
+    }
+  }
+}
+const DotenvModule = {
+  configDotenv,
+  _configVault,
+  _parseVault,
+  config,
+  decrypt,
+  parse,
+  populate
+};
+main.exports.configDotenv = DotenvModule.configDotenv;
+main.exports._configVault = DotenvModule._configVault;
+main.exports._parseVault = DotenvModule._parseVault;
+main.exports.config = DotenvModule.config;
+main.exports.decrypt = DotenvModule.decrypt;
+main.exports.parse = DotenvModule.parse;
+main.exports.populate = DotenvModule.populate;
+main.exports = DotenvModule;
+var mainExports = main.exports;
+const dotenv = /* @__PURE__ */ getDefaultExportFromCjs(mainExports);
+dotenv.config();
 const UNSPLASH_ACCESS_KEY = "bjNofz1Fzm6AJBDW22g27x4IfsNkUn3zHfzDHpuVH5Y";
 const STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token";
-const STRAVA_CLIENT_ID = process.env.NODE_ENV === "development" ? process.env.VITE_STRAVA_CLIENT_ID : "your_production_client_id";
-const STRAVA_CLIENT_SECRET = process.env.NODE_ENV === "development" ? process.env.VITE_STRAVA_CLIENT_SECRET : "your_production_client_secret";
+const STRAVA_CLIENT_ID = process.env.NODE_ENV === "development" ? process.env.VITE_STRAVA_CLIENT_ID : process.env.STRAVA_CLIENT_ID;
+const STRAVA_CLIENT_SECRET = process.env.NODE_ENV === "development" ? process.env.VITE_STRAVA_CLIENT_SECRET : process.env.STRAVA_CLIENT_SECRET;
+if (!STRAVA_CLIENT_ID || !STRAVA_CLIENT_SECRET) {
+  console.error("Missing required Strava environment variables:");
+  console.error("Client ID:", STRAVA_CLIENT_ID ? "✓" : "✗");
+  console.error("Client Secret:", STRAVA_CLIENT_SECRET ? "✗" : "✗");
+  throw new Error("Missing required Strava environment variables. Please check your configuration.");
+}
 electron.protocol.registerSchemesAsPrivileged([
   { scheme: "cricket", privileges: { secure: true, standard: true } }
 ]);
@@ -16735,7 +17010,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path$1.join(__dirname, "preload.js"),
+      preload: require$$1$1.join(__dirname, "preload.js"),
       sandbox: false
     }
   });
@@ -16745,11 +17020,11 @@ function createWindow() {
         ...details.responseHeaders,
         "Content-Security-Policy": [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:*",
-          "style-src 'self' 'unsafe-inline'",
-          "img-src 'self' data: https:",
-          "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com https://api.unsplash.com https://www.strava.com https://api.strava.com",
-          "font-src 'self'",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:* https://*.strava.com",
+          "style-src 'self' 'unsafe-inline' https://*.strava.com",
+          "img-src 'self' data: https: https://*.strava.com",
+          "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com https://api.unsplash.com https://www.strava.com https://api.strava.com https://*.strava.com",
+          "font-src 'self' https://*.strava.com",
           "worker-src 'self' blob:"
         ].join("; ")
       }
@@ -16760,7 +17035,9 @@ function createWindow() {
     if (url2.pathname === "/auth/strava/callback") {
       const code = url2.searchParams.get("code");
       if (code) {
-        mainWindow.webContents.send("strava-auth-callback", code);
+        electron.BrowserWindow.getAllWindows().forEach((window2) => {
+          window2.webContents.send("strava-auth-callback", { type: "strava-auth-callback", code });
+        });
       }
     }
     return new Response(null, { status: 200 });
@@ -16768,7 +17045,7 @@ function createWindow() {
   if (process.env.NODE_ENV === "development") {
     mainWindow.loadURL("http://localhost:5173");
   } else {
-    mainWindow.loadFile(path$1.join(__dirname, "../renderer/index.html"));
+    mainWindow.loadFile(require$$1$1.join(__dirname, "../renderer/index.html"));
   }
   if (process.env.OPEN_DEVTOOLS === "true") {
     mainWindow.webContents.openDevTools();

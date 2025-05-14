@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 export default defineConfig({
   plugins: [
@@ -51,5 +55,11 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'styled-components', 'react-feather']
   },
-  publicDir: path.join(__dirname, 'src/renderer/public')
+  publicDir: path.join(__dirname, 'src/renderer/public'),
+  // Explicitly define environment variables
+  define: {
+    'import.meta.env.VITE_STRAVA_CLIENT_ID': JSON.stringify(process.env.VITE_STRAVA_CLIENT_ID),
+    'import.meta.env.VITE_STRAVA_CLIENT_SECRET': JSON.stringify(process.env.VITE_STRAVA_CLIENT_SECRET),
+    'import.meta.env.VITE_STRAVA_REDIRECT_URI': JSON.stringify(process.env.VITE_STRAVA_REDIRECT_URI)
+  }
 }); 

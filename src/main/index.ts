@@ -1,6 +1,10 @@
 import { app, BrowserWindow, ipcMain, protocol } from 'electron';
 import path from 'path';
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 const UNSPLASH_ACCESS_KEY = 'bjNofz1Fzm6AJBDW22g27x4IfsNkUn3zHfzDHpuVH5Y';
 const STRAVA_API_URL = 'https://www.strava.com/api/v3';
@@ -9,11 +13,19 @@ const STRAVA_TOKEN_URL = 'https://www.strava.com/oauth/token';
 // These should be stored securely in production
 const STRAVA_CLIENT_ID = process.env.NODE_ENV === 'development'
   ? process.env.VITE_STRAVA_CLIENT_ID
-  : 'your_production_client_id';
+  : process.env.STRAVA_CLIENT_ID;
 
 const STRAVA_CLIENT_SECRET = process.env.NODE_ENV === 'development'
   ? process.env.VITE_STRAVA_CLIENT_SECRET
-  : 'your_production_client_secret';
+  : process.env.STRAVA_CLIENT_SECRET;
+
+// Validate required environment variables
+if (!STRAVA_CLIENT_ID || !STRAVA_CLIENT_SECRET) {
+  console.error('Missing required Strava environment variables:');
+  console.error('Client ID:', STRAVA_CLIENT_ID ? '✓' : '✗');
+  console.error('Client Secret:', STRAVA_CLIENT_SECRET ? '✗' : '✗');
+  throw new Error('Missing required Strava environment variables. Please check your configuration.');
+}
 
 // Register custom protocol before app is ready
 protocol.registerSchemesAsPrivileged([
@@ -39,11 +51,11 @@ function createWindow() {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:*",
-          "style-src 'self' 'unsafe-inline'",
-          "img-src 'self' data: https:",
-          "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com https://api.unsplash.com https://www.strava.com https://api.strava.com",
-          "font-src 'self'",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:* https://*.strava.com",
+          "style-src 'self' 'unsafe-inline' https://*.strava.com",
+          "img-src 'self' data: https: https://*.strava.com",
+          "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com https://api.unsplash.com https://www.strava.com https://api.strava.com https://*.strava.com",
+          "font-src 'self' https://*.strava.com",
           "worker-src 'self' blob:"
         ].join('; ')
       }
@@ -56,7 +68,10 @@ function createWindow() {
     if (url.pathname === '/auth/strava/callback') {
       const code = url.searchParams.get('code');
       if (code) {
-        mainWindow.webContents.send('strava-auth-callback', code);
+        // Send the code to all windows
+        BrowserWindow.getAllWindows().forEach(window => {
+          window.webContents.send('strava-auth-callback', { type: 'strava-auth-callback', code });
+        });
       }
     }
     return new Response(null, { status: 200 });
