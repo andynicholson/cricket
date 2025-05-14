@@ -22,7 +22,7 @@ function createWindow() {
           "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:*",
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: https:",
-          "connect-src 'self' http://localhost:* ws://localhost:*",
+          "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com",
           "font-src 'self'",
           "worker-src 'self' blob:"
         ].join('; ')

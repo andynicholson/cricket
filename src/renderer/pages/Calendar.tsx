@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { ChevronLeft, ChevronRight, Plus } from 'react-feather';
 import { getEvents } from '../../shared/firestore';
 import type { Event as EventType } from '../../shared/types';
+import { Timestamp } from 'firebase/firestore';
 
 const CalendarContainer = styled.div`
   display: flex;
@@ -93,17 +94,17 @@ const CalendarHeaderCell = styled.div`
   }
 `;
 
-const CalendarDay = styled.div<{ isToday?: boolean; isOtherMonth?: boolean }>`
+const CalendarDay = styled.div<{ $isToday?: boolean; $isOtherMonth?: boolean }>`
   background-color: white;
   min-height: 120px;
   padding: 8px;
   position: relative;
 
-  ${props => props.isToday && `
+  ${props => props.$isToday && `
     background-color: #f0f9ff;
   `}
 
-  ${props => props.isOtherMonth && `
+  ${props => props.$isOtherMonth && `
     background-color: #f9fafb;
     color: #9ca3af;
   `}
@@ -136,8 +137,42 @@ const Calendar: React.FC = () => {
 
   useEffect(() => {
     const loadEvents = async () => {
-      const loadedEvents = await getEvents();
-      setEvents(loadedEvents);
+      console.log('Fetching events from Firestore...');
+      try {
+        const loadedEvents = await getEvents();
+        console.log('Raw events from Firestore:', loadedEvents);
+        // Convert Firestore Timestamps to Date objects
+        const processedEvents = loadedEvents.map(event => {
+          try {
+            const startTime = event.startTime instanceof Timestamp 
+              ? event.startTime.toDate() 
+              : new Date(event.startTime);
+            const endTime = event.endTime instanceof Timestamp 
+              ? event.endTime.toDate() 
+              : new Date(event.endTime);
+            
+            // Validate dates
+            if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+              console.error('Invalid date found in event:', event);
+              return null;
+            }
+            
+            return {
+              ...event,
+              startTime,
+              endTime
+            };
+          } catch (error) {
+            console.error('Error processing event:', event, error);
+            return null;
+          }
+        }).filter((event): event is EventType => event !== null);
+        
+        console.log('Processed events with Date objects:', processedEvents);
+        setEvents(processedEvents);
+      } catch (error) {
+        console.error('Error loading events:', error);
+      }
     };
     loadEvents();
   }, []);
@@ -158,7 +193,7 @@ const Calendar: React.FC = () => {
     // Add days from the previous month
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(
-        <CalendarDay key={`prev-${i}`} isOtherMonth>
+        <CalendarDay key={`prev-${i}`} $isOtherMonth>
           <DayNumber>{new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate() - firstDayOfMonth + i + 1}</DayNumber>
         </CalendarDay>
       );
@@ -167,13 +202,39 @@ const Calendar: React.FC = () => {
     // Add days from the current month
     for (let i = 1; i <= daysInMonth; i++) {
       const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), i).toDateString();
+      const dayEvents = events.filter(event => {
+        try {
+          const eventDate = new Date(event.startTime);
+          if (isNaN(eventDate.getTime())) {
+            console.error('Invalid event date:', event);
+            return false;
+          }
+
+          const currentDayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
+          const matches = eventDate.getDate() === i && 
+                         eventDate.getMonth() === currentDate.getMonth() && 
+                         eventDate.getFullYear() === currentDate.getFullYear();
+
+          console.log(`Checking event for day ${i}:`, {
+            eventDate: eventDate.toString(),
+            currentDate: currentDayDate.toString(),
+            matches
+          });
+
+          if (matches) {
+            console.log(`Found event for day ${i}:`, event);
+          }
+          return matches;
+        } catch (error) {
+          console.error('Error processing event date:', event, error);
+          return false;
+        }
+      });
+
       days.push(
-        <CalendarDay key={i} isToday={isToday}>
+        <CalendarDay key={i} $isToday={isToday}>
           <DayNumber>{i}</DayNumber>
-          {events.filter(event => {
-            const eventDate = new Date(event.startTime);
-            return eventDate.getDate() === i && eventDate.getMonth() === currentDate.getMonth() && eventDate.getFullYear() === currentDate.getFullYear();
-          }).map(event => (
+          {dayEvents.map(event => (
             <Event key={event.id}>{event.title}</Event>
           ))}
         </CalendarDay>
@@ -184,7 +245,7 @@ const Calendar: React.FC = () => {
     const totalDays = 42; // 6 rows of 7 days
     for (let i = 1; i <= totalDays - (firstDayOfMonth + daysInMonth); i++) {
       days.push(
-        <CalendarDay key={`next-${i}`} isOtherMonth>
+        <CalendarDay key={`next-${i}`} $isOtherMonth>
           <DayNumber>{i}</DayNumber>
         </CalendarDay>
       );
