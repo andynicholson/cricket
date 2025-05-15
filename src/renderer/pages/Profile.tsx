@@ -153,11 +153,88 @@ const PageInfo = styled.div`
 
 const ActivityItem = styled.div`
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 16px;
   padding: 16px;
   border-radius: 8px;
   background-color: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #f3f4f6;
+  }
+`;
+
+const ActivityHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const ActivityDetails = styled.div<{ expanded: boolean }>`
+  display: ${props => props.expanded ? 'flex' : 'none'};
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+`;
+
+const ActivityDescription = styled.div`
+  color: #4b5563;
+  line-height: 1.5;
+`;
+
+const ActivityStats = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 16px;
+  background-color: white;
+  border-radius: 8px;
+`;
+
+const ActivityStat = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+`;
+
+const ActivityStatValue = styled.div`
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+`;
+
+const ActivityStatLabel = styled.div`
+  font-size: 12px;
+  color: #6b7280;
+`;
+
+const ActivityMap = styled.div`
+  width: 100%;
+  height: 200px;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+`;
+
+const ActivityAchievements = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const Achievement = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #4b5563;
 `;
 
 const ActivityIcon = styled.div`
@@ -228,11 +305,13 @@ interface AthleteStats {
     distance: number;
     moving_time: number;
     count: number;
+    elevation_gain: number;
   };
   ytd_run_totals: {
     distance: number;
     moving_time: number;
     count: number;
+    elevation_gain: number;
   };
   recent_run_totals: {
     count: number;
@@ -246,16 +325,26 @@ interface Activity {
   moving_time: number;
   start_date: string;
   type: string;
+  description?: string;
+  kudos_count?: number;
+  achievement_count?: number;
+  total_elevation_gain?: number;
+  achievements?: Array<{
+    type: string;
+    rank?: number;
+  }>;
 }
 
 const Profile: React.FC = () => {
   const { isAuthenticated, athlete, accessToken, login, logout } = useStrava();
   const [stats, setStats] = useState<AthleteStats | null>(null);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
-  const [weeklyStats, setWeeklyStats] = useState<{ runs: number; distance: number; time: number }>({ runs: 0, distance: 0, time: 0 });
-  const [threeMonthAverages, setThreeMonthAverages] = useState<{ runs: number; distance: number; time: number }>({ runs: 0, distance: 0, time: 0 });
+  const [weeklyStats, setWeeklyStats] = useState<{ runs: number; distance: number; time: number; elevation: number }>({ runs: 0, distance: 0, time: 0, elevation: 0 });
+  const [threeMonthAverages, setThreeMonthAverages] = useState<{ runs: number; distance: number; time: number; elevation: number }>({ runs: 0, distance: 0, time: 0, elevation: 0 });
   const [currentPage, setCurrentPage] = useState(1);
   const activitiesPerPage = 10;
+  const [expandedActivity, setExpandedActivity] = useState<number | null>(null);
+  const [activityDetails, setActivityDetails] = useState<Record<number, Activity>>({});
 
   // Add a debug effect to log state changes
   useEffect(() => {
@@ -281,7 +370,6 @@ const Profile: React.FC = () => {
       if (isAuthenticated && accessToken && athlete) {
         console.log('Fetching Strava data for athlete:', athlete.id);
         try {
-          // Fetch more activities to ensure we have enough for pagination
           const [statsData, activitiesData] = await Promise.all([
             stravaService.getAthleteStats(accessToken, athlete.id),
             stravaService.getRecentActivities(accessToken, 100)
@@ -294,7 +382,7 @@ const Profile: React.FC = () => {
 
           setStats(statsData);
           setRecentActivities(activitiesData);
-          setCurrentPage(1); // Reset to first page when new data is loaded
+          setCurrentPage(1);
 
           // Calculate weekly stats
           const oneWeekAgo = new Date();
@@ -305,13 +393,14 @@ const Profile: React.FC = () => {
             activity.type === 'Run'
           );
 
-          const weeklyStats = weeklyActivities.reduce((acc: { runs: number; distance: number; time: number }, activity: Activity) => ({
+          const calculatedWeeklyStats = weeklyActivities.reduce((acc: { runs: number; distance: number; time: number; elevation: number }, activity: Activity) => ({
             runs: acc.runs + 1,
             distance: acc.distance + activity.distance,
-            time: acc.time + activity.moving_time
-          }), { runs: 0, distance: 0, time: 0 });
+            time: acc.time + activity.moving_time,
+            elevation: acc.elevation + (activity.total_elevation_gain || 0)
+          }), { runs: 0, distance: 0, time: 0, elevation: 0 });
 
-          setWeeklyStats(weeklyStats);
+          setWeeklyStats(calculatedWeeklyStats);
 
           // Calculate 3-month averages
           const threeMonthsAgo = new Date();
@@ -322,17 +411,19 @@ const Profile: React.FC = () => {
             activity.type === 'Run'
           );
 
-          const threeMonthTotals = threeMonthActivities.reduce((acc: { runs: number; distance: number; time: number }, activity: Activity) => ({
+          const threeMonthTotals = threeMonthActivities.reduce((acc: { runs: number; distance: number; time: number; elevation: number }, activity: Activity) => ({
             runs: acc.runs + 1,
             distance: acc.distance + activity.distance,
-            time: acc.time + activity.moving_time
-          }), { runs: 0, distance: 0, time: 0 });
+            time: acc.time + activity.moving_time,
+            elevation: acc.elevation + (activity.total_elevation_gain || 0)
+          }), { runs: 0, distance: 0, time: 0, elevation: 0 });
 
           // Calculate weekly averages (divide by ~13 weeks)
           const weeklyAverages = {
             runs: Math.round(threeMonthTotals.runs / 13),
             distance: threeMonthTotals.distance / 13,
-            time: threeMonthTotals.time / 13
+            time: threeMonthTotals.time / 13,
+            elevation: threeMonthTotals.elevation / 13
           };
 
           setThreeMonthAverages(weeklyAverages);
@@ -359,6 +450,70 @@ const Profile: React.FC = () => {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+  };
+
+  const handleActivityClick = async (activityId: number) => {
+    if (expandedActivity === activityId) {
+      setExpandedActivity(null);
+      return;
+    }
+
+    setExpandedActivity(activityId);
+
+    // If we don't have the details yet, fetch them
+    if (!activityDetails[activityId] && accessToken) {
+      try {
+        const data = await stravaService.getActivityDetails(accessToken, activityId);
+        setActivityDetails(prev => ({
+          ...prev,
+          [activityId]: data
+        }));
+      } catch (error) {
+        console.error('Error fetching activity details:', error);
+      }
+    }
+  };
+
+  const formatElevation = (meters: number) => {
+    return `${Math.round(meters)}m`;
+  };
+
+  const renderActivityDetails = (activity: Activity) => {
+    const details = activityDetails[activity.id] || activity;
+    
+    return (
+      <ActivityDetails expanded={expandedActivity === activity.id}>
+        {details.description && (
+          <ActivityDescription>{details.description}</ActivityDescription>
+        )}
+        
+        <ActivityStats>
+          <ActivityStat>
+            <ActivityStatValue>{details.kudos_count || 0}</ActivityStatValue>
+            <ActivityStatLabel>Kudos</ActivityStatLabel>
+          </ActivityStat>
+          <ActivityStat>
+            <ActivityStatValue>{details.achievement_count || 0}</ActivityStatValue>
+            <ActivityStatLabel>Achievements</ActivityStatLabel>
+          </ActivityStat>
+          <ActivityStat>
+            <ActivityStatValue>{formatElevation(details.total_elevation_gain || 0)}</ActivityStatValue>
+            <ActivityStatLabel>Elevation Gain</ActivityStatLabel>
+          </ActivityStat>
+        </ActivityStats>
+
+        {details.achievements && details.achievements.length > 0 && (
+          <ActivityAchievements>
+            {details.achievements.map((achievement, index) => (
+              <Achievement key={index}>
+                {achievement.type}
+                {achievement.rank && ` (${achievement.rank})`}
+              </Achievement>
+            ))}
+          </ActivityAchievements>
+        )}
+      </ActivityDetails>
+    );
   };
 
   if (!isAuthenticated) {
@@ -397,7 +552,7 @@ const Profile: React.FC = () => {
     });
   };
 
-  const renderStats = (title: string, stats: { distance: number; moving_time: number; count: number }) => (
+  const renderStats = (title: string, stats: { distance: number; moving_time: number; count: number; elevation_gain: number }) => (
     <StatsSection>
       <StatsTitle>{title}</StatsTitle>
       <Stats>
@@ -414,8 +569,8 @@ const Profile: React.FC = () => {
           <StatLabel>Total Activities</StatLabel>
         </StatCard>
         <StatCard>
-          <StatValue>{formatDistance(stats.distance / stats.count)}</StatValue>
-          <StatLabel>Average Distance</StatLabel>
+          <StatValue>{formatElevation(stats.elevation_gain)}</StatValue>
+          <StatLabel>Total Elevation</StatLabel>
         </StatCard>
       </Stats>
     </StatsSection>
@@ -458,8 +613,8 @@ const Profile: React.FC = () => {
               <StatLabel>Distance This Week</StatLabel>
             </WeeklyStatCard>
             <WeeklyStatCard>
-              <StatValue>{formatTime(weeklyStats.time)}</StatValue>
-              <StatLabel>Time This Week</StatLabel>
+              <StatValue>{formatElevation(weeklyStats.elevation)}</StatValue>
+              <StatLabel>Elevation This Week</StatLabel>
             </WeeklyStatCard>
           </WeeklyStats>
 
@@ -473,8 +628,8 @@ const Profile: React.FC = () => {
               <StatLabel>Average Distance/Week</StatLabel>
             </WeeklyStatCard>
             <WeeklyStatCard>
-              <StatValue>{formatTime(threeMonthAverages.time)}</StatValue>
-              <StatLabel>Average Time/Week</StatLabel>
+              <StatValue>{formatElevation(threeMonthAverages.elevation)}</StatValue>
+              <StatLabel>Average Elevation/Week</StatLabel>
             </WeeklyStatCard>
           </WeeklyStats>
 
@@ -488,16 +643,19 @@ const Profile: React.FC = () => {
         <ActivityList>
           {currentActivities && currentActivities.length > 0 ? (
             currentActivities.map(activity => (
-              <ActivityItem key={activity.id}>
-                <ActivityIcon>
-                  <Activity size={20} />
-                </ActivityIcon>
-                <ActivityInfo>
-                  <ActivityTitle>{activity.name}</ActivityTitle>
-                  <ActivityMeta>
-                    {formatDistance(activity.distance)} • {formatTime(activity.moving_time)} • {formatDate(activity.start_date)}
-                  </ActivityMeta>
-                </ActivityInfo>
+              <ActivityItem key={activity.id} onClick={() => handleActivityClick(activity.id)}>
+                <ActivityHeader>
+                  <ActivityIcon>
+                    <Activity size={20} />
+                  </ActivityIcon>
+                  <ActivityInfo>
+                    <ActivityTitle>{activity.name}</ActivityTitle>
+                    <ActivityMeta>
+                      {formatDistance(activity.distance)} • {formatTime(activity.moving_time)} • {formatDate(activity.start_date)}
+                    </ActivityMeta>
+                  </ActivityInfo>
+                </ActivityHeader>
+                {renderActivityDetails(activity)}
               </ActivityItem>
             ))
           ) : (

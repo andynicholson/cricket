@@ -136,6 +136,21 @@ class StravaService {
     console.log('Received recent activities:', data);
     return data;
   }
+
+  async getActivityDetails(accessToken: string, activityId: number): Promise<any> {
+    console.log('Fetching activity details for:', activityId);
+    const refreshToken = JSON.parse(localStorage.getItem('strava_token_data') || '{}').refresh_token;
+    const validToken = await this.ensureValidToken(accessToken, refreshToken);
+    
+    const response = await fetch(`${STRAVA_API_URL}/activities/${activityId}`, {
+      headers: {
+        'Authorization': `Bearer ${validToken}`
+      }
+    });
+    const data = await response.json();
+    console.log('Received activity details:', data);
+    return data;
+  }
 }
 
 export const stravaService = new StravaService(); 
