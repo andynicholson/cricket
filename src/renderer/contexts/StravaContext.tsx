@@ -100,31 +100,7 @@ export const StravaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (data.type === 'strava-auth-callback') {
           try {
             console.log('StravaProvider: Processing Strava callback with code:', data.code);
-            const response = await window.electron.ipcRenderer.invoke('exchange-strava-code', data.code);
-            
-            if (!response || !response.access_token) {
-              throw new Error('Invalid response from Strava API');
-            }
-            
-            console.log('StravaProvider: Received token response:', response);
-            
-            const { access_token, athlete } = response;
-            console.log('StravaProvider: Extracted token and athlete data:', {
-              hasToken: !!access_token,
-              athleteId: athlete?.id,
-              athleteName: `${athlete?.firstname} ${athlete?.lastname}`
-            });
-            
-            // Update localStorage first
-            localStorage.setItem('strava_access_token', access_token);
-            localStorage.setItem('strava_athlete', JSON.stringify(athlete));
-            
-            // Then update state in a single batch
-            console.log('StravaProvider: Updating state with new auth data');
-            setAccessToken(access_token);
-            setAthlete(athlete);
-            setIsAuthenticated(true);
-            
+            await handleAuthCallback(data.code);
             console.log('StravaProvider: Successfully authenticated with Strava');
           } catch (error) {
             console.error('StravaProvider: Error handling Strava callback:', error);
@@ -208,15 +184,21 @@ export const StravaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const response = await window.electron.ipcRenderer.invoke('exchange-strava-code', code);
       console.log('Received token response:', response);
       
-      const { access_token, athlete } = response;
+      const { access_token, athlete, expires_at, refresh_token } = response;
       console.log('Extracted token and athlete data:', {
         hasToken: !!access_token,
         athleteId: athlete?.id,
-        athleteName: `${athlete?.firstname} ${athlete?.lastname}`
+        athleteName: `${athlete?.firstname} ${athlete?.lastname}`,
+        expiresAt: expires_at
       });
       
       localStorage.setItem('strava_access_token', access_token);
       localStorage.setItem('strava_athlete', JSON.stringify(athlete));
+      localStorage.setItem('strava_token_data', JSON.stringify({
+        access_token,
+        refresh_token,
+        expires_at
+      }));
       
       console.log('Updating state with new auth data');
       setAccessToken(access_token);

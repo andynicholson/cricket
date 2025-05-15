@@ -265,11 +265,11 @@ const Profile: React.FC = () => {
     });
   };
 
-  const statsData = stats ? [
+  const statsData = stats && stats.all_run_totals ? [
     { label: 'Total Distance', value: formatDistance(stats.all_run_totals.distance), icon: Map },
     { label: 'Total Time', value: formatTime(stats.all_run_totals.moving_time), icon: Clock },
     { label: 'Runs Completed', value: stats.all_run_totals.count.toString(), icon: Award },
-    { label: 'Recent Runs', value: stats.recent_run_totals.count.toString(), icon: Activity },
+    { label: 'Recent Runs', value: stats.recent_run_totals?.count?.toString() || '0', icon: Activity },
   ] : [];
 
   return (
@@ -284,13 +284,13 @@ const Profile: React.FC = () => {
         </Avatar>
         <ProfileInfo>
           <Name>
-            {`${athlete?.firstname} ${athlete?.lastname}`}
+            {`${athlete?.firstname || ''} ${athlete?.lastname || ''}`}
             <EditButton onClick={logout}>
               Disconnect
             </EditButton>
           </Name>
           <Bio>
-            Connected with Strava • {athlete?.city}, {athlete?.country}
+            Connected with Strava • {athlete?.city || 'Unknown'}, {athlete?.country || 'Unknown'}
           </Bio>
         </ProfileInfo>
       </ProfileHeader>
@@ -308,19 +308,28 @@ const Profile: React.FC = () => {
       <RecentActivity>
         <SectionTitle>Recent Activity</SectionTitle>
         <ActivityList>
-          {recentActivities.map(activity => (
-            <ActivityItem key={activity.id}>
-              <ActivityIcon>
-                <Activity size={20} />
-              </ActivityIcon>
+          {recentActivities && recentActivities.length > 0 ? (
+            recentActivities.map(activity => (
+              <ActivityItem key={activity.id}>
+                <ActivityIcon>
+                  <Activity size={20} />
+                </ActivityIcon>
+                <ActivityInfo>
+                  <ActivityTitle>{activity.name}</ActivityTitle>
+                  <ActivityMeta>
+                    {formatDistance(activity.distance)} • {formatTime(activity.moving_time)} • {formatDate(activity.start_date)}
+                  </ActivityMeta>
+                </ActivityInfo>
+              </ActivityItem>
+            ))
+          ) : (
+            <ActivityItem>
               <ActivityInfo>
-                <ActivityTitle>{activity.name}</ActivityTitle>
-                <ActivityMeta>
-                  {formatDistance(activity.distance)} • {formatTime(activity.moving_time)} • {formatDate(activity.start_date)}
-                </ActivityMeta>
+                <ActivityTitle>No recent activities</ActivityTitle>
+                <ActivityMeta>Connect your Strava account to see your activities</ActivityMeta>
               </ActivityInfo>
             </ActivityItem>
-          ))}
+          )}
         </ActivityList>
       </RecentActivity>
     </ProfileContainer>

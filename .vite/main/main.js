@@ -17022,7 +17022,7 @@ function createWindow() {
           "default-src 'self'",
           "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:* https://*.strava.com",
           "style-src 'self' 'unsafe-inline' https://*.strava.com",
-          "img-src 'self' data: https: https://*.strava.com",
+          "img-src 'self' data: https: https://*.strava.com https://*.cloudfront.net",
           "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com https://api.unsplash.com https://www.strava.com https://api.strava.com https://*.strava.com",
           "font-src 'self' https://*.strava.com",
           "worker-src 'self' blob:"
@@ -17143,11 +17143,16 @@ electron.ipcMain.handle("exchange-strava-code", async (_, code) => {
     client_id: STRAVA_CLIENT_ID,
     client_secret: STRAVA_CLIENT_SECRET,
     code,
-    grant_type: "authorization_code"
+    grant_type: "authorization_code",
+    redirect_uri: "http://localhost:5173/auth/strava/callback"
   });
   try {
-    console.log("Main process: Making request to Strava token endpoint");
-    const response = await axios.post(STRAVA_TOKEN_URL, params);
+    console.log("Main process: Making request to Strava token endpoint with params:", params.toString());
+    const response = await axios.post(STRAVA_TOKEN_URL, params.toString(), {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    });
     if (response.status !== 200) {
       console.error("Main process: Unexpected response status:", response.status);
       throw new Error(`Unexpected response status: ${response.status}`);
