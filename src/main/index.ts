@@ -68,7 +68,7 @@ function createWindow() {
 
   // Set CSP for all requests
   mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    console.log('Headers received for:', details.url);
+    //console.log('Headers received for:', details.url);
     callback({
       responseHeaders: {
         ...details.responseHeaders,
@@ -79,7 +79,7 @@ function createWindow() {
 
   // Also set CSP for the main window's session
   mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
-    console.log('Permission requested:', permission);
+    //console.log('Permission requested:', permission);
     callback(true);
   });
 

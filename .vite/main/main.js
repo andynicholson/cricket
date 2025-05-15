@@ -17034,7 +17034,6 @@ function createWindow() {
   ].join("; ");
   console.log("Setting CSP:", csp);
   mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    console.log("Headers received for:", details.url);
     callback({
       responseHeaders: {
         ...details.responseHeaders,
@@ -17043,7 +17042,6 @@ function createWindow() {
     });
   });
   mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
-    console.log("Permission requested:", permission);
     callback(true);
   });
   mainWindow.webContents.on("did-finish-load", () => {

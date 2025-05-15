@@ -9,7 +9,7 @@ const ProfileContainer = styled.div`
   flex-direction: column;
   gap: 24px;
   max-width: 800px;
-  margin: 0 auto;
+  margin: 32px auto 0;
 `;
 
 const ProfileHeader = styled.div`
@@ -119,6 +119,38 @@ const ActivityList = styled.div`
   gap: 16px;
 `;
 
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+`;
+
+const PageButton = styled.button<{ active?: boolean }>`
+  padding: 8px 12px;
+  border: 1px solid ${props => props.active ? '#2563eb' : '#e5e7eb'};
+  border-radius: 6px;
+  background-color: ${props => props.active ? '#2563eb' : 'white'};
+  color: ${props => props.active ? 'white' : '#4b5563'};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: ${props => props.active ? '#2563eb' : '#f3f4f6'};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const PageInfo = styled.div`
+  color: #6b7280;
+  font-size: 14px;
+`;
+
 const ActivityItem = styled.div`
   display: flex;
   align-items: center;
@@ -153,8 +185,51 @@ const ActivityMeta = styled.div`
   color: #6b7280;
 `;
 
+const StatsSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const StatsTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+`;
+
+const StatsHeader = styled.h2`
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 16px 0;
+`;
+
+const WeeklyStats = styled.div`
+  background-color: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+`;
+
+const WeeklyStatCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+`;
+
 interface AthleteStats {
   all_run_totals: {
+    distance: number;
+    moving_time: number;
+    count: number;
+  };
+  ytd_run_totals: {
     distance: number;
     moving_time: number;
     count: number;
@@ -177,6 +252,10 @@ const Profile: React.FC = () => {
   const { isAuthenticated, athlete, accessToken, login, logout } = useStrava();
   const [stats, setStats] = useState<AthleteStats | null>(null);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const [weeklyStats, setWeeklyStats] = useState<{ runs: number; distance: number; time: number }>({ runs: 0, distance: 0, time: 0 });
+  const [threeMonthAverages, setThreeMonthAverages] = useState<{ runs: number; distance: number; time: number }>({ runs: 0, distance: 0, time: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
+  const activitiesPerPage = 10;
 
   // Add a debug effect to log state changes
   useEffect(() => {
@@ -202,9 +281,10 @@ const Profile: React.FC = () => {
       if (isAuthenticated && accessToken && athlete) {
         console.log('Fetching Strava data for athlete:', athlete.id);
         try {
+          // Fetch more activities to ensure we have enough for pagination
           const [statsData, activitiesData] = await Promise.all([
             stravaService.getAthleteStats(accessToken, athlete.id),
-            stravaService.getRecentActivities(accessToken, 3)
+            stravaService.getRecentActivities(accessToken, 100)
           ]);
           
           console.log('Received Strava data:', {
@@ -214,6 +294,48 @@ const Profile: React.FC = () => {
 
           setStats(statsData);
           setRecentActivities(activitiesData);
+          setCurrentPage(1); // Reset to first page when new data is loaded
+
+          // Calculate weekly stats
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          
+          const weeklyActivities = activitiesData.filter((activity: Activity) => 
+            new Date(activity.start_date) >= oneWeekAgo && 
+            activity.type === 'Run'
+          );
+
+          const weeklyStats = weeklyActivities.reduce((acc: { runs: number; distance: number; time: number }, activity: Activity) => ({
+            runs: acc.runs + 1,
+            distance: acc.distance + activity.distance,
+            time: acc.time + activity.moving_time
+          }), { runs: 0, distance: 0, time: 0 });
+
+          setWeeklyStats(weeklyStats);
+
+          // Calculate 3-month averages
+          const threeMonthsAgo = new Date();
+          threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+          
+          const threeMonthActivities = activitiesData.filter((activity: Activity) => 
+            new Date(activity.start_date) >= threeMonthsAgo && 
+            activity.type === 'Run'
+          );
+
+          const threeMonthTotals = threeMonthActivities.reduce((acc: { runs: number; distance: number; time: number }, activity: Activity) => ({
+            runs: acc.runs + 1,
+            distance: acc.distance + activity.distance,
+            time: acc.time + activity.moving_time
+          }), { runs: 0, distance: 0, time: 0 });
+
+          // Calculate weekly averages (divide by ~13 weeks)
+          const weeklyAverages = {
+            runs: Math.round(threeMonthTotals.runs / 13),
+            distance: threeMonthTotals.distance / 13,
+            time: threeMonthTotals.time / 13
+          };
+
+          setThreeMonthAverages(weeklyAverages);
         } catch (error) {
           console.error('Error fetching Strava data:', error);
         }
@@ -228,6 +350,16 @@ const Profile: React.FC = () => {
 
     fetchData();
   }, [isAuthenticated, athlete, accessToken]);
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(recentActivities.length / activitiesPerPage);
+  const startIndex = (currentPage - 1) * activitiesPerPage;
+  const endIndex = startIndex + activitiesPerPage;
+  const currentActivities = recentActivities.slice(startIndex, endIndex);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   if (!isAuthenticated) {
     return (
@@ -265,12 +397,29 @@ const Profile: React.FC = () => {
     });
   };
 
-  const statsData = stats && stats.all_run_totals ? [
-    { label: 'Total Distance', value: formatDistance(stats.all_run_totals.distance), icon: Map },
-    { label: 'Total Time', value: formatTime(stats.all_run_totals.moving_time), icon: Clock },
-    { label: 'Runs Completed', value: stats.all_run_totals.count.toString(), icon: Award },
-    { label: 'Recent Runs', value: stats.recent_run_totals?.count?.toString() || '0', icon: Activity },
-  ] : [];
+  const renderStats = (title: string, stats: { distance: number; moving_time: number; count: number }) => (
+    <StatsSection>
+      <StatsTitle>{title}</StatsTitle>
+      <Stats>
+        <StatCard>
+          <StatValue>{formatDistance(stats.distance)}</StatValue>
+          <StatLabel>Total Distance</StatLabel>
+        </StatCard>
+        <StatCard>
+          <StatValue>{formatTime(stats.moving_time)}</StatValue>
+          <StatLabel>Total Time</StatLabel>
+        </StatCard>
+        <StatCard>
+          <StatValue>{stats.count}</StatValue>
+          <StatLabel>Total Activities</StatLabel>
+        </StatCard>
+        <StatCard>
+          <StatValue>{formatDistance(stats.distance / stats.count)}</StatValue>
+          <StatLabel>Average Distance</StatLabel>
+        </StatCard>
+      </Stats>
+    </StatsSection>
+  );
 
   return (
     <ProfileContainer>
@@ -295,21 +444,50 @@ const Profile: React.FC = () => {
         </ProfileInfo>
       </ProfileHeader>
 
-      <Stats>
-        {statsData.map((stat, index) => (
-          <StatCard key={index}>
-            <stat.icon size={24} />
-            <StatValue>{stat.value}</StatValue>
-            <StatLabel>{stat.label}</StatLabel>
-          </StatCard>
-        ))}
-      </Stats>
+      {stats && (
+        <>
+          <StatsHeader>Running Statistics</StatsHeader>
+          
+          <WeeklyStats>
+            <WeeklyStatCard>
+              <StatValue>{weeklyStats.runs}</StatValue>
+              <StatLabel>Runs This Week</StatLabel>
+            </WeeklyStatCard>
+            <WeeklyStatCard>
+              <StatValue>{formatDistance(weeklyStats.distance)}</StatValue>
+              <StatLabel>Distance This Week</StatLabel>
+            </WeeklyStatCard>
+            <WeeklyStatCard>
+              <StatValue>{formatTime(weeklyStats.time)}</StatValue>
+              <StatLabel>Time This Week</StatLabel>
+            </WeeklyStatCard>
+          </WeeklyStats>
+
+          <WeeklyStats>
+            <WeeklyStatCard>
+              <StatValue>{threeMonthAverages.runs}</StatValue>
+              <StatLabel>Average Runs/Week</StatLabel>
+            </WeeklyStatCard>
+            <WeeklyStatCard>
+              <StatValue>{formatDistance(threeMonthAverages.distance)}</StatValue>
+              <StatLabel>Average Distance/Week</StatLabel>
+            </WeeklyStatCard>
+            <WeeklyStatCard>
+              <StatValue>{formatTime(threeMonthAverages.time)}</StatValue>
+              <StatLabel>Average Time/Week</StatLabel>
+            </WeeklyStatCard>
+          </WeeklyStats>
+
+          {renderStats('Year to Date', stats.ytd_run_totals)}
+          {renderStats('All Time', stats.all_run_totals)}
+        </>
+      )}
 
       <RecentActivity>
         <SectionTitle>Recent Activity</SectionTitle>
         <ActivityList>
-          {recentActivities && recentActivities.length > 0 ? (
-            recentActivities.map(activity => (
+          {currentActivities && currentActivities.length > 0 ? (
+            currentActivities.map(activity => (
               <ActivityItem key={activity.id}>
                 <ActivityIcon>
                   <Activity size={20} />
@@ -331,6 +509,26 @@ const Profile: React.FC = () => {
             </ActivityItem>
           )}
         </ActivityList>
+        
+        {recentActivities.length > 0 && (
+          <PaginationContainer>
+            <PageButton 
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </PageButton>
+            <PageInfo>
+              Page {currentPage} of {totalPages}
+            </PageInfo>
+            <PageButton 
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </PageButton>
+          </PaginationContainer>
+        )}
       </RecentActivity>
     </ProfileContainer>
   );
