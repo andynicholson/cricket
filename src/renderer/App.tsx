@@ -8,7 +8,6 @@ import Calendar from './pages/Calendar';
 import Messages from './pages/Messages';
 import Profile from './pages/Profile';
 import Events from './pages/Events';
-import StravaCallback from './pages/StravaCallback';
 
 const AppContainer = styled.div`
   display: flex;
@@ -18,15 +17,8 @@ const AppContainer = styled.div`
 
 const MainContent = styled.main`
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-`;
-
-const ContentArea = styled.div`
-  flex: 1;
-  padding: 24px;
   overflow-y: auto;
+  padding: 24px;
 `;
 
 const App: React.FC = () => {
@@ -36,15 +28,12 @@ const App: React.FC = () => {
         <Sidebar />
         <MainContent>
           <TopBar />
-          <ContentArea>
-            <Routes>
-              <Route path="/" element={<Calendar />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/auth/strava/callback" element={<StravaCallback />} />
-            </Routes>
-          </ContentArea>
+          <Routes>
+            <Route path="/" element={<Calendar />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/events" element={<Events />} />
+          </Routes>
         </MainContent>
       </AppContainer>
     </StravaProvider>

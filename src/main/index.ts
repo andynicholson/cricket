@@ -62,21 +62,6 @@ function createWindow() {
     });
   });
 
-  // Handle custom protocol
-  protocol.handle('cricket', (request) => {
-    const url = new URL(request.url);
-    if (url.pathname === '/auth/strava/callback') {
-      const code = url.searchParams.get('code');
-      if (code) {
-        // Send the code to all windows
-        BrowserWindow.getAllWindows().forEach(window => {
-          window.webContents.send('strava-auth-callback', { type: 'strava-auth-callback', code });
-        });
-      }
-    }
-    return new Response(null, { status: 200 });
-  });
-
   // Load the index.html file
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:5173');
@@ -88,13 +73,80 @@ function createWindow() {
   if (process.env.OPEN_DEVTOOLS === 'true') {
     mainWindow.webContents.openDevTools();
   }
+
+  return mainWindow;
 }
 
-// Remove forced development mode
-// process.env.NODE_ENV = 'development';
+// Handle Strava callback in popup windows
+function handleStravaCallback(window: BrowserWindow, url: string) {
+  console.log('Handling Strava callback in window:', window.getTitle());
+  const urlObj = new URL(url);
+  const code = urlObj.searchParams.get('code');
+  
+  if (code) {
+    console.log('Strava callback received with code:', code);
+    // Find the main window
+    const allWindows = BrowserWindow.getAllWindows();
+    console.log('All windows:', allWindows.map(w => w.getTitle()));
+    
+    // Find the main window (the one that's not the popup)
+    const mainWindow = allWindows.find(w => w !== window);
+    
+    if (mainWindow) {
+      console.log('Found main window:', mainWindow.getTitle());
+      console.log('Sending auth code to main window');
+      // Send the auth code to the main window
+      mainWindow.webContents.send('strava-auth-callback', { type: 'strava-auth-callback', code });
+      console.log('Auth code sent to main window');
+    } else {
+      console.error('Could not find main window');
+    }
+    
+    // Close the popup window
+    window.close();
+    console.log('Closed popup window');
+  }
+}
 
 app.whenReady().then(() => {
-  createWindow();
+  const mainWindow = createWindow();
+  mainWindow.setTitle('Cricket');
+  console.log('Main window created with title:', mainWindow.getTitle());
+
+  // Store the main window reference
+  let mainWindowRef = mainWindow;
+
+  // Handle navigation in all windows
+  app.on('web-contents-created', (event, contents) => {
+    contents.on('will-navigate', (event, url) => {
+      console.log('Navigation detected:', url);
+      if (url.includes('/auth/strava/callback')) {
+        // Prevent the default navigation
+        event.preventDefault();
+        
+        // Handle the callback
+        const window = BrowserWindow.fromWebContents(contents);
+        if (window) {
+          handleStravaCallback(window, url);
+        } else {
+          console.error('Could not find window for contents');
+        }
+      }
+    });
+
+    // Also handle the callback when the URL changes
+    contents.on('did-navigate', (event, url) => {
+      console.log('Navigation completed:', url);
+      if (url.includes('/auth/strava/callback')) {
+        const window = BrowserWindow.fromWebContents(contents);
+        if (window) {
+          handleStravaCallback(window, url);
+        } else {
+          console.error('Could not find window for contents');
+        }
+      }
+    });
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -154,6 +206,7 @@ ipcMain.handle('get-strava-client-id', () => STRAVA_CLIENT_ID);
 ipcMain.handle('get-strava-client-secret', () => STRAVA_CLIENT_SECRET);
 
 ipcMain.handle('exchange-strava-code', async (_, code: string) => {
+  console.log('Main process: Exchanging Strava code for token');
   const params = new URLSearchParams({
     client_id: STRAVA_CLIENT_ID!,
     client_secret: STRAVA_CLIENT_SECRET!,
@@ -161,8 +214,34 @@ ipcMain.handle('exchange-strava-code', async (_, code: string) => {
     grant_type: 'authorization_code',
   });
 
-  const response = await axios.post(STRAVA_TOKEN_URL, params);
-  return response.data;
+  try {
+    console.log('Main process: Making request to Strava token endpoint');
+    const response = await axios.post(STRAVA_TOKEN_URL, params);
+    
+    if (response.status !== 200) {
+      console.error('Main process: Unexpected response status:', response.status);
+      throw new Error(`Unexpected response status: ${response.status}`);
+    }
+
+    console.log('Main process: Successfully exchanged code for token');
+    console.log('Main process: Token response:', {
+      hasToken: !!response.data.access_token,
+      athleteId: response.data.athlete?.id,
+      athleteName: `${response.data.athlete?.firstname} ${response.data.athlete?.lastname}`
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Main process: Error exchanging code for token:', error);
+    if (axios.isAxiosError(error)) {
+      console.error('Main process: Strava API error details:', {
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      // Throw a more descriptive error
+      throw new Error(`Strava API error: ${error.response?.data?.message || error.message}`);
+    }
+    throw error;
+  }
 });
 
 ipcMain.handle('refresh-strava-token', async (_, refreshToken: string) => {

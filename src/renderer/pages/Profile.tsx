@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Edit2, Map, Clock, Award, Activity } from 'react-feather';
-import { useStrava } from '../contexts/StravaContext';
+import { useStrava } from '../hooks/useStrava';
 import { stravaService } from '../services/stravaService';
 
 const ProfileContainer = styled.div`
@@ -178,26 +178,56 @@ const Profile: React.FC = () => {
   const [stats, setStats] = useState<AthleteStats | null>(null);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
 
+  // Add a debug effect to log state changes
   useEffect(() => {
+    console.log('Profile state changed:', {
+      isAuthenticated,
+      hasAthlete: !!athlete,
+      hasAccessToken: !!accessToken,
+      athleteId: athlete?.id,
+      athleteName: athlete ? `${athlete.firstname} ${athlete.lastname}` : null
+    });
+  }, [isAuthenticated, athlete, accessToken]);
+
+  useEffect(() => {
+    console.log('Profile useEffect triggered with:', {
+      isAuthenticated,
+      hasAthlete: !!athlete,
+      hasAccessToken: !!accessToken,
+      athleteId: athlete?.id,
+      athleteName: athlete ? `${athlete.firstname} ${athlete.lastname}` : null
+    });
+
     const fetchData = async () => {
       if (isAuthenticated && accessToken && athlete) {
+        console.log('Fetching Strava data for athlete:', athlete.id);
         try {
           const [statsData, activitiesData] = await Promise.all([
             stravaService.getAthleteStats(accessToken, athlete.id),
             stravaService.getRecentActivities(accessToken, 3)
           ]);
           
+          console.log('Received Strava data:', {
+            stats: statsData,
+            activities: activitiesData
+          });
+
           setStats(statsData);
           setRecentActivities(activitiesData);
         } catch (error) {
           console.error('Error fetching Strava data:', error);
-          logout();
         }
+      } else {
+        console.log('Not fetching data because:', {
+          isAuthenticated,
+          hasAccessToken: !!accessToken,
+          hasAthlete: !!athlete
+        });
       }
     };
 
     fetchData();
-  }, [isAuthenticated, accessToken, athlete, logout]);
+  }, [isAuthenticated, athlete, accessToken]);
 
   if (!isAuthenticated) {
     return (
