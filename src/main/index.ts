@@ -29,7 +29,15 @@ if (!STRAVA_CLIENT_ID || !STRAVA_CLIENT_SECRET) {
 
 // Register custom protocol before app is ready
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'cricket', privileges: { secure: true, standard: true } }
+  { 
+    scheme: 'cricket', 
+    privileges: { 
+      secure: true, 
+      standard: true,
+      supportFetchAPI: true,
+      corsEnabled: true
+    } 
+  }
 ]);
 
 function createWindow() {
@@ -40,26 +48,44 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
-      sandbox: false
+      sandbox: false,
+      webSecurity: true
     }
   });
 
   // Set Content Security Policy
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:* https://*.strava.com",
+    "style-src 'self' 'unsafe-inline' https://*.strava.com",
+    "img-src 'self' data: https://images.unsplash.com https://dgalywyr863hv.cloudfront.net https://*.cloudfront.net https://*.strava.com",
+    "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com https://api.unsplash.com https://www.strava.com https://api.strava.com https://*.strava.com",
+    "font-src 'self' https://*.strava.com",
+    "worker-src 'self' blob:"
+  ].join('; ');
+
+  console.log('Setting CSP:', csp);
+
+  // Set CSP for all requests
   mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    console.log('Headers received for:', details.url);
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [
-          "default-src 'self'",
-          "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:* https://*.strava.com",
-          "style-src 'self' 'unsafe-inline' https://*.strava.com",
-          "img-src 'self' data: https: https://*.strava.com https://*.cloudfront.net",
-          "connect-src 'self' http://localhost:* ws://localhost:* https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com wss://*.firebase.com https://api.unsplash.com https://www.strava.com https://api.strava.com https://*.strava.com",
-          "font-src 'self' https://*.strava.com",
-          "worker-src 'self' blob:"
-        ].join('; ')
+        'Content-Security-Policy': [csp]
       }
     });
+  });
+
+  // Also set CSP for the main window's session
+  mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    console.log('Permission requested:', permission);
+    callback(true);
+  });
+
+  // Also log when the window is ready
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Main window loaded');
   });
 
   // Load the index.html file
